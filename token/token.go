@@ -12,9 +12,27 @@ type Token struct {
 type Type int
 
 const (
-	// Syecial tokens
+	// Special tokens
 	EOF Type = iota
 	COMMENT
+
+	// Identifiers and type literals
+	INTEGER
+	NUMERAL
+
+	// Cardinals
+	NEGATIVE
+	ZERO
+	ONES
+	VIGESIMAL
+	TENS
+	HUNDRED
+	POWER
+
+	// Punctuation
+	LPAREN
+	RPAREN
+	DASH
 
 	// Keywords
 	WHEREAS
@@ -22,6 +40,43 @@ const (
 )
 
 var keywords = map[string]Type{
+	"negative":    NEGATIVE,
+	"zero":        ZERO,
+	"one":         ONES,
+	"two":         ONES,
+	"three":       ONES,
+	"four":        ONES,
+	"five":        ONES,
+	"six":         ONES,
+	"seven":       ONES,
+	"eight":       ONES,
+	"nine":        ONES,
+	"ten":         VIGESIMAL,
+	"eleven":      VIGESIMAL,
+	"twelve":      VIGESIMAL,
+	"thirteen":    VIGESIMAL,
+	"fourteen":    VIGESIMAL,
+	"fifteen":     VIGESIMAL,
+	"sixteen":     VIGESIMAL,
+	"seventeen":   VIGESIMAL,
+	"eighteen":    VIGESIMAL,
+	"nineteen":    VIGESIMAL,
+	"twenty":      TENS,
+	"thirty":      TENS,
+	"forty":       TENS,
+	"fifty":       TENS,
+	"sixty":       TENS,
+	"seventy":     TENS,
+	"eighty":      TENS,
+	"ninety":      TENS,
+	"hundred":     HUNDRED,
+	"thousand":    POWER,
+	"million":     POWER,
+	"billion":     POWER,
+	"trillion":    POWER,
+	"quadrillion": POWER,
+	"quintillion": POWER,
+
 	"whereas":  WHEREAS,
 	"resolved": RESOLVED,
 }

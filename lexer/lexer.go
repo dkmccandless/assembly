@@ -33,18 +33,34 @@ func (l *Lexer) readChar() {
 // Next returns the next token.Token in l.
 func (l *Lexer) Next() token.Token {
 	l.skipWhitespace()
+	var t token.Token
 	switch l.ch {
 	case 0:
-		return token.Token{Typ: token.EOF}
+		return token.Token{token.EOF, ""}
+	case '(':
+		t = token.Token{token.LPAREN, "("}
+	case ')':
+		t = token.Token{token.RPAREN, ")"}
+	case '-':
+		l.readChar()
+		if isNumeral(l.ch) {
+			return token.Token{token.NUMERAL, "-" + l.scan(isNumeral)}
+		}
+		return token.Token{token.DASH, "-"}
 	default:
-		if isLetter(l.ch) {
+		switch {
+		case isLetter(l.ch):
 			lit := l.scan(isLetter)
 			return token.Token{token.Lookup(lit), lit}
+		case isDigit(l.ch):
+			lit := l.scan(isNumeral)
+			return token.Token{token.NUMERAL, lit}
+		default:
+			t = token.Token{token.COMMENT, string(l.ch)}
 		}
 	}
-	ch := l.ch
 	l.readChar()
-	return token.Token{token.COMMENT, string(ch)}
+	return t
 }
 
 // scan advances l through all consecutive bytes that satisfy f and returns a string of the bytes read.
@@ -64,3 +80,9 @@ func (l *Lexer) skipWhitespace() {
 }
 
 func isLetter(b byte) bool { return 'A' <= b && b <= 'Z' || 'a' <= b && b <= 'z' }
+
+// isDigit reports whether b is a digit.
+func isDigit(b byte) bool { return '0' <= b && b <= '9' }
+
+// isNumeral reports whether b is a valid character for a numeral literal: a digit, a delimiting comma, or a negative sign.
+func isNumeral(b byte) bool { return isDigit(b) || b == ',' || b == '-' }

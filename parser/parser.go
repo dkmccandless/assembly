@@ -33,6 +33,9 @@ func (p *Parser) next() { p.cur, p.peek = p.peek, p.l.Next() }
 // curIs reports whether the Type of p.cur is typ.
 func (p *Parser) curIs(typ token.Type) bool { return p.cur.Typ == typ }
 
+// peekIs reports whether the Type of p.peek is typ.
+func (p *Parser) peekIs(typ token.Type) bool { return p.peek.Typ == typ }
+
 var (
 	// Resolution parsing failure errors
 	errEarlyResolved = errors.New("no Whereas clause before Resolved clause")

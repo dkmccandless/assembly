@@ -12,10 +12,81 @@ func TestNext(t *testing.T) {
 		tokens []token.Token
 	}{
 		{
+			input: `()-`,
+			tokens: []token.Token{
+				{token.LPAREN, "("},
+				{token.RPAREN, ")"},
+				{token.DASH, "-"},
+				{token.EOF, ""},
+			},
+		},
+		{
 			input: `WHEREAS RESOLVED`,
 			tokens: []token.Token{
 				{token.WHEREAS, "WHEREAS"},
 				{token.RESOLVED, "RESOLVED"},
+				{token.EOF, ""},
+			},
+		},
+		{
+			input: `-1 2 3000000000000`,
+			tokens: []token.Token{
+				{token.NUMERAL, "-1"},
+				{token.NUMERAL, "2"},
+				{token.NUMERAL, "3000000000000"},
+				{token.EOF, ""},
+			},
+		},
+		{
+			input: "negative zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty thirty forty fifty sixty seventy eighty ninety hundred thousand million billion trillion quadrillion quintillion",
+			tokens: []token.Token{
+				{token.NEGATIVE, "negative"},
+				{token.ZERO, "zero"},
+				{token.ONES, "one"},
+				{token.ONES, "two"},
+				{token.ONES, "three"},
+				{token.ONES, "four"},
+				{token.ONES, "five"},
+				{token.ONES, "six"},
+				{token.ONES, "seven"},
+				{token.ONES, "eight"},
+				{token.ONES, "nine"},
+				{token.VIGESIMAL, "ten"},
+				{token.VIGESIMAL, "eleven"},
+				{token.VIGESIMAL, "twelve"},
+				{token.VIGESIMAL, "thirteen"},
+				{token.VIGESIMAL, "fourteen"},
+				{token.VIGESIMAL, "fifteen"},
+				{token.VIGESIMAL, "sixteen"},
+				{token.VIGESIMAL, "seventeen"},
+				{token.VIGESIMAL, "eighteen"},
+				{token.VIGESIMAL, "nineteen"},
+				{token.TENS, "twenty"},
+				{token.TENS, "thirty"},
+				{token.TENS, "forty"},
+				{token.TENS, "fifty"},
+				{token.TENS, "sixty"},
+				{token.TENS, "seventy"},
+				{token.TENS, "eighty"},
+				{token.TENS, "ninety"},
+				{token.HUNDRED, "hundred"},
+				{token.POWER, "thousand"},
+				{token.POWER, "million"},
+				{token.POWER, "billion"},
+				{token.POWER, "trillion"},
+				{token.POWER, "quadrillion"},
+				{token.POWER, "quintillion"},
+				{token.EOF, ""},
+			},
+		},
+		{
+			input: "negative three (-3)",
+			tokens: []token.Token{
+				{token.NEGATIVE, "negative"},
+				{token.ONES, "three"},
+				{token.LPAREN, "("},
+				{token.NUMERAL, "-3"},
+				{token.RPAREN, ")"},
 				{token.EOF, ""},
 			},
 		},
@@ -44,6 +115,34 @@ BE IT RESOLVED that this assembly takes no action.`,
 			if got != want {
 				t.Errorf("Next(%v): got %v, want %v", test.input, got, want)
 			}
+		}
+	}
+}
+
+func TestScan(t *testing.T) {
+	for _, test := range []struct {
+		f           func(byte) bool
+		input, want string
+	}{
+		{isLetter, "", ""},
+		{isLetter, "a", "a"},
+		{isLetter, " ", ""},
+		{isLetter, "abc def", "abc"},
+		{isLetter, "!abc", ""},
+		{isLetter, "abc!", "abc"},
+
+		{isNumeral, "0", "0"},
+		{isNumeral, "-3", "-3"},
+		{isNumeral, "5", "5"},
+		{isNumeral, "256", "256"},
+		{isNumeral, "65,536", "65,536"},
+		{isNumeral, "24,", "24,"},
+		{isNumeral, "24 hours", "24"},
+		{isNumeral, " 0", ""},
+	} {
+		l := New(test.input)
+		if got := l.scan(test.f); got != test.want {
+			t.Errorf("scan(%v): got %v, want %v", test.input, got, test.want)
 		}
 	}
 }

@@ -1,5 +1,11 @@
 package ast
 
+import (
+	"strconv"
+
+	"github.com/dkmccandless/assembly/token"
+)
+
 // All node types implement the Node interface.
 type Node interface {
 	String() string
@@ -22,3 +28,17 @@ type ResolvedStmt interface {
 	Node
 	resStmtNode()
 }
+
+// Expressions implement the Expr interface.
+type Expr interface {
+	Node
+	exprNode()
+}
+
+type IntegerLiteral struct {
+	Token token.Token // token.INTEGER
+	Value int64
+}
+
+func (e *IntegerLiteral) exprNode()      {}
+func (e *IntegerLiteral) String() string { return strconv.Itoa(int(e.Value)) }

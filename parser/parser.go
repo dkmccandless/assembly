@@ -82,3 +82,14 @@ func (p *Parser) ParseResolution() (*ast.Resolution, error) {
 
 	return res, nil
 }
+
+// ParseExpr parses an expression.
+// If parsing fails, it returns an error explaining why.
+func (p *Parser) ParseExpr() (ast.Expr, error) {
+	switch {
+	case p.cur.IsCardinal():
+		return p.parseIntegerLiteral()
+	default:
+		return nil, errors.New("unrecognized expression")
+	}
+}

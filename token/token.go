@@ -89,3 +89,14 @@ func Lookup(s string) Type {
 	}
 	return COMMENT
 }
+
+// IsCardinal reports whether t's Type is one of the cardinal numeric Types.
+func (t Token) IsCardinal() bool {
+	return t.Typ == NEGATIVE ||
+		t.Typ == ZERO ||
+		t.Typ == ONES ||
+		t.Typ == VIGESIMAL ||
+		t.Typ == TENS ||
+		t.Typ == HUNDRED ||
+		t.Typ == POWER
+}

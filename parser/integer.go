@@ -9,16 +9,16 @@ import (
 )
 
 var (
-	// errInteger is returned by parseInteger given input that does not consist of a cardinal followed by a parenthesized numeral.
+	// errInteger indicates that an integer does not consist of a cardinal followed by a parenthesized numeral.
 	errInteger = errors.New("invalid integer")
 
-	// errCardinal is returned by cardinal parsing functions given input that cannot be parsed.
+	// errCardinal indicates that an integer's cardinal part cannot be parsed.
 	errCardinal = errors.New("invalid cardinal")
 
-	// errNumeral is returned by numeral parsing functions given input that cannot be parsed.
+	// errNumeral indicates that an integer's numeral part cannot be parsed.
 	errNumeral = errors.New("invalid numeral")
 
-	// errDisagree is returned by parseIntegerLit when a cardinal and the following numeral represent different numbers.
+	// errDisagree indicates that a cardinal and the following numeral represent different numbers.
 	errDisagree = errors.New("cardinal and numeral disagree")
 )
 

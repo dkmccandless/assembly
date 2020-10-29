@@ -91,6 +91,28 @@ func TestNext(t *testing.T) {
 			},
 		},
 		{
+			input: `""`,
+			tokens: []token.Token{
+				{token.STRING, ""},
+				{token.EOF, ""},
+			},
+		},
+		{
+			input: `"Greetings, Assembly."`,
+			tokens: []token.Token{
+				{token.STRING, "Greetings, Assembly."},
+				{token.EOF, ""},
+			},
+		},
+		{
+			input: `WHEREAS the customary greeting is "Hello, World!":`,
+			tokens: []token.Token{
+				{token.WHEREAS, "WHEREAS"},
+				{token.STRING, "Hello, World!"},
+				{token.EOF, ""},
+			},
+		},
+		{
 			input: `A Resolution Concerning Commentary
 
 WHEREAS a resolution consisting entirely of comments has no effect: now, therefore, 

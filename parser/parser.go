@@ -89,7 +89,13 @@ func (p *Parser) ParseExpr() (ast.Expr, error) {
 	switch {
 	case p.cur.IsCardinal():
 		return p.parseIntegerLiteral()
+	case p.curIs(token.STRING):
+		return p.parseStringLiteral(), nil
 	default:
 		return nil, errors.New("unrecognized expression")
 	}
+}
+
+func (p *Parser) parseStringLiteral() ast.Expr {
+	return &ast.StringLiteral{Token: p.cur, Value: p.cur.Lit}
 }

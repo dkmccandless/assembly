@@ -7,6 +7,7 @@ import (
 
 	"github.com/dkmccandless/assembly/ast"
 	"github.com/dkmccandless/assembly/lexer"
+	"github.com/dkmccandless/assembly/token"
 )
 
 func TestParseResolution(t *testing.T) {
@@ -28,6 +29,27 @@ func TestParseResolution(t *testing.T) {
 	}
 }
 
+var stringTests = []string{
+	"",
+	"WHEREAS",
+	"zero (0)",
+	"Greetings, Assembly.",
+}
+
+func TestParseStringLiteral(t *testing.T) {
+	for _, test := range stringTests {
+		input := fmt.Sprintf("\"%v\"", test)
+		want := &ast.StringLiteral{
+			Token: token.Token{Typ: token.STRING, Lit: test},
+			Value: test,
+		}
+		p := New(lexer.New(input))
+		if got := p.parseStringLiteral(); !reflect.DeepEqual(got, want) {
+			t.Errorf("parseStringLiteral(%v): got %#v, want %#v", input, got, want)
+		}
+	}
+}
+
 func TestParseExpr(t *testing.T) {
 	for _, test := range integerTests {
 		input := fmt.Sprintf("%v (%v)", test.car, test.num)
@@ -36,12 +58,27 @@ func TestParseExpr(t *testing.T) {
 		if err != nil {
 			t.Errorf("ParseExpr(%v): got error %v", input, err)
 		}
-		i, ok := expr.(*ast.IntegerLiteral)
+		e, ok := expr.(*ast.IntegerLiteral)
 		if !ok {
 			t.Errorf("ParseExpr(%v): got %T (%+v)", input, expr, expr)
 		}
-		if i.Value != test.n {
-			t.Errorf("ParseExpr(%v): got %v", input, i.Value)
+		if e.Value != test.n {
+			t.Errorf("ParseExpr(%v): got %v", input, e.Value)
+		}
+	}
+	for _, test := range stringTests {
+		input := fmt.Sprintf("\"%v\"", test)
+		p := New(lexer.New(input))
+		expr, err := p.ParseExpr()
+		if err != nil {
+			t.Errorf("ParseExpr(%v): got error %v", input, err)
+		}
+		e, ok := expr.(*ast.StringLiteral)
+		if !ok {
+			t.Errorf("ParseExpr(%v): got %T (%+v)", input, expr, expr)
+		}
+		if e.Value != test {
+			t.Errorf("ParseExpr(%v): got %v", input, e.Value)
 		}
 	}
 }

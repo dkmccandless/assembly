@@ -19,6 +19,7 @@ const (
 	// Identifiers and type literals
 	INTEGER
 	NUMERAL
+	STRING
 
 	// Cardinals
 	NEGATIVE

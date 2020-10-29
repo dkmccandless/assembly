@@ -37,6 +37,10 @@ func (l *Lexer) Next() token.Token {
 	switch l.ch {
 	case 0:
 		return token.Token{token.EOF, ""}
+	case '"':
+		// TODO: return error for no closing quotation mark
+		l.readChar()
+		t = token.Token{token.STRING, l.scanString()}
 	case '(':
 		t = token.Token{token.LPAREN, "("}
 	case ')':
@@ -67,6 +71,16 @@ func (l *Lexer) Next() token.Token {
 func (l *Lexer) scan(f func(b byte) bool) string {
 	var s string
 	for f(l.ch) {
+		s += string(l.ch)
+		l.readChar()
+	}
+	return s
+}
+
+// scanString advances l through consecutive bytes, stopping at a quotation mark or EOF, and returns a string of the bytes read.
+func (l *Lexer) scanString() string {
+	var s string
+	for l.ch != '"' && l.ch != 0 {
 		s += string(l.ch)
 		l.readChar()
 	}

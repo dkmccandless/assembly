@@ -42,3 +42,11 @@ type IntegerLiteral struct {
 
 func (e *IntegerLiteral) exprNode()      {}
 func (e *IntegerLiteral) String() string { return strconv.Itoa(int(e.Value)) }
+
+type StringLiteral struct {
+	Token token.Token // token.STRING
+	Value string
+}
+
+func (e *StringLiteral) exprNode()      {}
+func (e *StringLiteral) String() string { return e.Value }

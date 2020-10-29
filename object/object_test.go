@@ -94,3 +94,19 @@ func TestIntegerInspect(t *testing.T) {
 		}
 	}
 }
+
+var stringTests = []string{
+	"",
+	"WHEREAS",
+	"zero (0)",
+	"Greetings, Assembly.",
+}
+
+func TestStringInspect(t *testing.T) {
+	for _, test := range stringTests {
+		s := &String{Value: test}
+		if got := s.Inspect(); got != test {
+			t.Errorf("Inspect(%v): got %v", test, got)
+		}
+	}
+}

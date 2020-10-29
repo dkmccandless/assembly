@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"fmt"
 	"math"
 	"testing"
 
@@ -100,6 +101,28 @@ func TestEvalIntegerExpr(t *testing.T) {
 		}
 		if obj.Value != test.n {
 			t.Errorf("EvalIntegerExpr(%v): got %v", test.input, obj.Value)
+		}
+	}
+}
+
+func TestEvalStringExpr(t *testing.T) {
+	for _, test := range []string{
+		"",
+		"WHEREAS",
+		"zero (0)",
+		"Greetings, Assembly.",
+	} {
+		input := fmt.Sprintf("\"%v\"", test)
+		node, err := parser.New(lexer.New(input)).ParseExpr()
+		if err != nil {
+			t.Errorf("EvalStringExpr(%v): got error %v", node, err)
+		}
+		obj, ok := Eval(node).(*object.String)
+		if !ok {
+			t.Errorf("EvalStringExpr(%v): got %T (%+v)", test, obj, obj)
+		}
+		if obj.Value != test {
+			t.Errorf("EvalStringExpr(%v): got %v", test, obj.Value)
 		}
 	}
 }

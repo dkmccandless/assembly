@@ -11,6 +11,7 @@ type Type int
 
 const (
 	INTEGER Type = iota
+	STRING
 )
 
 type Integer struct{ Value int64 }
@@ -83,3 +84,8 @@ func (i *Integer) Inspect() string {
 
 	return fmt.Sprintf("%v (%v)", car, num)
 }
+
+type String struct{ Value string }
+
+func (s *String) Type() Type      { return STRING }
+func (s *String) Inspect() string { return s.Value }

@@ -5,9 +5,11 @@ import (
 	"math"
 	"testing"
 
+	"github.com/dkmccandless/assembly/ast"
 	"github.com/dkmccandless/assembly/lexer"
 	"github.com/dkmccandless/assembly/object"
 	"github.com/dkmccandless/assembly/parser"
+	"github.com/dkmccandless/assembly/token"
 )
 
 func TestEvalIntegerExpr(t *testing.T) {
@@ -145,6 +147,44 @@ func TestEvalIdentifier(t *testing.T) {
 		env.Set(test, want)
 		if obj, ok := Eval(node, env).(*object.String); !ok {
 			t.Errorf("EvalIdentifier(%v): got %T (%+v) after Set, want %T (%+v)", test, obj, obj, want, want)
+		}
+	}
+}
+
+func TestEvalDeclStmt(t *testing.T) {
+	for _, ast := range []*ast.DeclStmt{
+		&ast.DeclStmt{
+			Token: token.Token{Typ: token.HEREINAFTER, Lit: "hereinafter"},
+			Name: &ast.Identifier{
+				Token: token.Token{Typ: token.IDENT, Lit: "Greeting"},
+				Value: "Greeting",
+			},
+			Value: &ast.StringLiteral{
+				Token: token.Token{Typ: token.STRING, Lit: "Hello, World!"},
+				Value: "Hello, World!",
+			},
+		},
+		&ast.DeclStmt{
+			Token: token.Token{Typ: token.HEREINAFTER, Lit: "hereinafter"},
+			Name: &ast.Identifier{
+				Token: token.Token{Typ: token.IDENT, Lit: "Answer"},
+				Value: "Answer",
+			},
+			Value: &ast.IntegerLiteral{
+				Token: token.Token{Typ: token.INTEGER, Lit: "42"},
+				Value: 42,
+			},
+		},
+	} {
+		env := object.NewEnvironment()
+		if obj := Eval(ast.Name, env); obj != nil {
+			t.Errorf("EvalDeclStmt(Identifier %+v): got %T (%+v) before declaration", ast.Name, obj, obj)
+		}
+		if obj := Eval(ast, env); obj != nil {
+			t.Errorf("EvalDeclStmt(%+v): got %T (%+v) from declaration", ast, obj, obj)
+		}
+		if obj := Eval(ast.Name, env); obj == nil {
+			t.Errorf("EvalDeclStmt(Identifier %+v): got %T (%+v) after declaration", ast.Name, obj, obj)
 		}
 	}
 }

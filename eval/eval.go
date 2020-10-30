@@ -17,8 +17,10 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		if obj, ok := env.Get(node.Value); ok {
 			return obj
 		}
-		return nil
-	default:
-		return nil
+	case *ast.DeclStmt:
+		if val := Eval(node.Value, env); val != nil {
+			env.Set(node.Name.Value, val)
+		}
 	}
+	return nil
 }

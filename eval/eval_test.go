@@ -95,7 +95,7 @@ func TestEvalIntegerExpr(t *testing.T) {
 		if err != nil {
 			t.Errorf("EvalIntegerExpr(%v): got error %v", node, err)
 		}
-		obj, ok := Eval(node).(*object.Integer)
+		obj, ok := Eval(node, object.NewEnvironment()).(*object.Integer)
 		if !ok {
 			t.Errorf("EvalIntegerExpr(%v): got %T (%+v)", test.input, obj, obj)
 		}
@@ -117,7 +117,7 @@ func TestEvalStringExpr(t *testing.T) {
 		if err != nil {
 			t.Errorf("EvalStringExpr(%v): got error %v", node, err)
 		}
-		obj, ok := Eval(node).(*object.String)
+		obj, ok := Eval(node, object.NewEnvironment()).(*object.String)
 		if !ok {
 			t.Errorf("EvalStringExpr(%v): got %T (%+v)", test, obj, obj)
 		}

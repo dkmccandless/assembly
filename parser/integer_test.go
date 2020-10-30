@@ -348,6 +348,8 @@ func TestParseInvalidIntegerLiteral(t *testing.T) {
 		input string
 		want  error
 	}{
+		{"0", errInteger},                               // numeral without cardinal
+		{"zero", errInteger},                            // cardinal without numeral
 		{"one 1", errInteger},                           // numeral must be parenthesized
 		{"two 2)", errInteger},                          // parentheses must be properly opened...
 		{"two (2", errInteger},                          // ...and closed

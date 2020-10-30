@@ -127,7 +127,7 @@ func (p *Parser) parseDeclStmt() (*ast.DeclStmt, error) {
 	}
 	s.Name = p.parseIdentifier()
 	p.next()
-	for !p.cur.IsCardinal() && !p.curIs(token.STRING) && !p.curIs(token.IDENT) {
+	for !p.cur.IsCardinal() && !p.curIs(token.NUMERAL) && !p.curIs(token.STRING) && !p.curIs(token.IDENT) {
 		p.next()
 	}
 	var err error
@@ -173,6 +173,9 @@ func (p *Parser) parsePublishStmt() (*ast.PublishStmt, error) {
 func (p *Parser) ParseExpr() (ast.Expr, error) {
 	switch {
 	case p.cur.IsCardinal():
+		return p.parseIntegerLiteral()
+	case p.curIs(token.NUMERAL):
+		// Let parseIntegerLiteral return an error
 		return p.parseIntegerLiteral()
 	case p.curIs(token.STRING):
 		return p.parseStringLiteral(), nil

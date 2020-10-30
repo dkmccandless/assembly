@@ -23,6 +23,9 @@ var (
 )
 
 func (p *Parser) parseIntegerLiteral() (ast.Expr, error) {
+	if p.curIs(token.NUMERAL) {
+		return nil, errInteger
+	}
 	c, err := p.parseCardinalLiteral()
 	if err != nil {
 		return nil, err

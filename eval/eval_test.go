@@ -126,3 +126,25 @@ func TestEvalStringExpr(t *testing.T) {
 		}
 	}
 }
+
+func TestEvalIdentifier(t *testing.T) {
+	for _, test := range []string{
+		"Greeting",
+		"Quantity",
+		"Answer",
+	} {
+		node, err := parser.New(lexer.New(test)).ParseExpr()
+		if err != nil {
+			t.Errorf("EvalIdentifier(%v): got error %v", node, err)
+		}
+		env := object.NewEnvironment()
+		if obj := Eval(node, env); obj != nil {
+			t.Errorf("EvalIdentifier(%v): got %T (%+v) before Set", test, obj, obj)
+		}
+		want := &object.String{Value: "ok"}
+		env.Set(test, want)
+		if obj, ok := Eval(node, env).(*object.String); !ok {
+			t.Errorf("EvalIdentifier(%v): got %T (%+v) after Set, want %T (%+v)", test, obj, obj, want, want)
+		}
+	}
+}

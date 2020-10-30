@@ -1,6 +1,8 @@
 package eval
 
 import (
+	"fmt"
+
 	"github.com/dkmccandless/assembly/ast"
 	"github.com/dkmccandless/assembly/object"
 )
@@ -20,6 +22,10 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.DeclStmt:
 		if val := Eval(node.Value, env); val != nil {
 			env.Set(node.Name.Value, val)
+		}
+	case *ast.PublishStmt:
+		if val := Eval(node.Value, env); val != nil {
+			fmt.Println(val.Inspect())
 		}
 	}
 	return nil

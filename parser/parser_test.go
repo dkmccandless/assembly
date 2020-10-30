@@ -102,8 +102,8 @@ func TestParseDeclStmt(t *testing.T) {
 		},
 	} {
 		p := New(lexer.New(test.input))
-		if got := p.parseDeclStmt(); !reflect.DeepEqual(got, test.want) {
-			t.Errorf("parseDeclStmt(%v): got %#v, want %#v", test.input, got, test.want)
+		if got, err := p.parseDeclStmt(); err != nil || !reflect.DeepEqual(got, test.want) {
+			t.Errorf("parseDeclStmt(%v): got %#v, %v, want %#v", test.input, got, err, test.want)
 		}
 	}
 }
@@ -145,8 +145,8 @@ func TestParsePublishStmt(t *testing.T) {
 		},
 	} {
 		p := New(lexer.New(test.input))
-		if got := p.parsePublishStmt(); !reflect.DeepEqual(got, test.want) {
-			t.Errorf("parsePublishStmt(%v): got %#v, want %#v", test.input, got, test.want)
+		if got, err := p.parsePublishStmt(); err != nil || !reflect.DeepEqual(got, test.want) {
+			t.Errorf("parsePublishStmt(%v): got %#v, %v, want %#v", test.input, got, err, test.want)
 		}
 	}
 }

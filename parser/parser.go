@@ -65,7 +65,11 @@ func (p *Parser) ParseResolution() (*ast.Resolution, error) {
 				return nil, errLateWhereas
 			}
 			haveWhereas = true
-			if stmt := p.parseWhereasStmt(); stmt != nil {
+			stmt, err := p.parseWhereasStmt()
+			if err != nil {
+				return nil, err
+			}
+			if stmt != nil {
 				res.WhereasStmts = append(res.WhereasStmts, stmt)
 			}
 		case token.RESOLVED:
@@ -82,7 +86,11 @@ func (p *Parser) ParseResolution() (*ast.Resolution, error) {
 				}
 			}
 			haveResolved = true
-			if stmt := p.parseResolvedStmt(); stmt != nil {
+			stmt, err := p.parseResolvedStmt()
+			if err != nil {
+				return nil, err
+			}
+			if stmt != nil {
 				res.ResolvedStmts = append(res.ResolvedStmts, stmt)
 			}
 		}
@@ -95,10 +103,10 @@ func (p *Parser) ParseResolution() (*ast.Resolution, error) {
 	return res, nil
 }
 
-func (p *Parser) parseWhereasStmt() ast.WhereasStmt {
+func (p *Parser) parseWhereasStmt() (ast.WhereasStmt, error) {
 	for !p.peekIs(token.HEREINAFTER) {
 		if p.peekIs(token.WHEREAS) || p.peekIs(token.RESOLVED) || p.peekIs(token.EOF) {
-			return nil
+			return nil, nil
 		}
 		p.next()
 	}
@@ -107,11 +115,11 @@ func (p *Parser) parseWhereasStmt() ast.WhereasStmt {
 	case token.HEREINAFTER:
 		return p.parseDeclStmt()
 	default:
-		return nil
+		return nil, nil
 	}
 }
 
-func (p *Parser) parseDeclStmt() *ast.DeclStmt {
+func (p *Parser) parseDeclStmt() (*ast.DeclStmt, error) {
 	s := &ast.DeclStmt{Token: p.cur}
 	p.next()
 	for !p.curIs(token.IDENT) {
@@ -125,15 +133,15 @@ func (p *Parser) parseDeclStmt() *ast.DeclStmt {
 	var err error
 	s.Value, err = p.ParseExpr()
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return s
+	return s, nil
 }
 
-func (p *Parser) parseResolvedStmt() ast.ResolvedStmt {
+func (p *Parser) parseResolvedStmt() (ast.ResolvedStmt, error) {
 	for !p.peekIs(token.PUBLISH) {
 		if p.peekIs(token.WHEREAS) || p.peekIs(token.RESOLVED) || p.peekIs(token.EOF) {
-			return nil
+			return nil, nil
 		}
 		p.next()
 	}
@@ -142,11 +150,11 @@ func (p *Parser) parseResolvedStmt() ast.ResolvedStmt {
 	case token.PUBLISH:
 		return p.parsePublishStmt()
 	default:
-		return nil
+		return nil, nil
 	}
 }
 
-func (p *Parser) parsePublishStmt() *ast.PublishStmt {
+func (p *Parser) parsePublishStmt() (*ast.PublishStmt, error) {
 	s := &ast.PublishStmt{Token: p.cur}
 	p.next()
 	for !p.cur.IsCardinal() && !p.curIs(token.STRING) && !p.curIs(token.IDENT) {
@@ -155,9 +163,9 @@ func (p *Parser) parsePublishStmt() *ast.PublishStmt {
 	var err error
 	s.Value, err = p.ParseExpr()
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return s
+	return s, nil
 }
 
 // ParseExpr parses an expression.

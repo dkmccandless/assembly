@@ -25,10 +25,70 @@ func TestParseResolution(t *testing.T) {
 		{"title whereas whereas resolved", &ast.Resolution{}, nil},
 		{"title whereas resolved resolved", &ast.Resolution{}, nil},
 		{"title whereas whereas resolved resolved", &ast.Resolution{}, nil},
+		{
+			`title whereas hereinafter Greeting "Hello, World!" resolved`,
+			&ast.Resolution{
+				WhereasStmts: []ast.WhereasStmt{
+					&ast.DeclStmt{
+						Token: token.Token{Typ: token.HEREINAFTER, Lit: "hereinafter"},
+						Name: &ast.Identifier{
+							Token: token.Token{Typ: token.IDENT, Lit: "Greeting"},
+							Value: "Greeting",
+						},
+						Value: &ast.StringLiteral{
+							Token: token.Token{Typ: token.STRING, Lit: "Hello, World!"},
+							Value: "Hello, World!",
+						},
+					},
+				},
+			},
+			nil,
+		},
 	} {
 		p := New(lexer.New(test.input))
 		if ast, err := p.ParseResolution(); !reflect.DeepEqual(ast, test.ast) || err != test.err {
 			t.Errorf("ParseResolution(%v): got %v, %v; want %v, %v", test.input, ast, err, test.ast, test.err)
+		}
+	}
+}
+
+func TestParseDeclStmt(t *testing.T) {
+	for _, test := range []struct {
+		input string
+		want  *ast.DeclStmt
+	}{
+		{
+			`hereinafter Greeting) is "Hello, World!"`,
+			&ast.DeclStmt{
+				Token: token.Token{Typ: token.HEREINAFTER, Lit: "hereinafter"},
+				Name: &ast.Identifier{
+					Token: token.Token{Typ: token.IDENT, Lit: "Greeting"},
+					Value: "Greeting",
+				},
+				Value: &ast.StringLiteral{
+					Token: token.Token{Typ: token.STRING, Lit: "Hello, World!"},
+					Value: "Hello, World!",
+				},
+			},
+		},
+		{
+			"hereinafter referred to as the Answer, is forty-two (42)",
+			&ast.DeclStmt{
+				Token: token.Token{Typ: token.HEREINAFTER, Lit: "hereinafter"},
+				Name: &ast.Identifier{
+					Token: token.Token{Typ: token.IDENT, Lit: "Answer"},
+					Value: "Answer",
+				},
+				Value: &ast.IntegerLiteral{
+					Token: token.Token{Typ: token.INTEGER, Lit: "42"},
+					Value: 42,
+				},
+			},
+		},
+	} {
+		p := New(lexer.New(test.input))
+		if got := p.parseDeclStmt(); !reflect.DeepEqual(got, test.want) {
+			t.Errorf("parseDeclStmt(%v): got %#v, want %#v", test.input, got, test.want)
 		}
 	}
 }

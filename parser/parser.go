@@ -65,6 +65,9 @@ func (p *Parser) ParseResolution() (*ast.Resolution, error) {
 				return nil, errLateWhereas
 			}
 			haveWhereas = true
+			if stmt := p.parseWhereasStmt(); stmt != nil {
+				res.WhereasStmts = append(res.WhereasStmts, stmt)
+			}
 		case token.RESOLVED:
 			if !haveWhereas {
 				for {
@@ -89,6 +92,38 @@ func (p *Parser) ParseResolution() (*ast.Resolution, error) {
 	return res, nil
 }
 
+func (p *Parser) parseWhereasStmt() ast.WhereasStmt {
+	if !p.peekIs(token.HEREINAFTER) {
+		return nil
+	}
+	p.next()
+	switch p.cur.Typ {
+	case token.HEREINAFTER:
+		return p.parseDeclStmt()
+	default:
+		return nil
+	}
+}
+
+func (p *Parser) parseDeclStmt() *ast.DeclStmt {
+	s := &ast.DeclStmt{Token: p.cur}
+	p.next()
+	for !p.curIs(token.IDENT) {
+		p.next()
+	}
+	s.Name = p.parseIdentifier()
+	p.next()
+	for !p.cur.IsCardinal() && !p.curIs(token.STRING) && !p.curIs(token.IDENT) {
+		p.next()
+	}
+	var err error
+	s.Value, err = p.ParseExpr()
+	if err != nil {
+		return nil
+	}
+	return s
+}
+
 // ParseExpr parses an expression.
 // If parsing fails, it returns an error explaining why.
 func (p *Parser) ParseExpr() (ast.Expr, error) {
@@ -104,10 +139,10 @@ func (p *Parser) ParseExpr() (ast.Expr, error) {
 	}
 }
 
-func (p *Parser) parseIdentifier() ast.Expr {
+func (p *Parser) parseIdentifier() *ast.Identifier {
 	return &ast.Identifier{Token: p.cur, Value: p.cur.Lit}
 }
 
-func (p *Parser) parseStringLiteral() ast.Expr {
+func (p *Parser) parseStringLiteral() *ast.StringLiteral {
 	return &ast.StringLiteral{Token: p.cur, Value: p.cur.Lit}
 }

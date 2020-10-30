@@ -39,6 +39,7 @@ const (
 	// Keywords
 	WHEREAS
 	RESOLVED
+	HEREINAFTER
 )
 
 var keywords = map[string]Type{
@@ -79,8 +80,9 @@ var keywords = map[string]Type{
 	"quadrillion": POWER,
 	"quintillion": POWER,
 
-	"whereas":  WHEREAS,
-	"resolved": RESOLVED,
+	"whereas":     WHEREAS,
+	"resolved":    RESOLVED,
+	"hereinafter": HEREINAFTER,
 }
 
 // Lookup maps s to its keyword Type, if any,

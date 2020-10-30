@@ -127,6 +127,7 @@ func TestNext(t *testing.T) {
 				{token.IDENT, "Customary"},
 				{token.IDENT, "Greeting"},
 				{token.LPAREN, "("},
+				{token.HEREINAFTER, "hereinafter"},
 				{token.IDENT, "Greeting"},
 				{token.RPAREN, ")"},
 				{token.STRING, "Hello, World!"},

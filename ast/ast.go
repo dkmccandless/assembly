@@ -23,6 +23,15 @@ type WhereasStmt interface {
 	whStmtNode()
 }
 
+type DeclStmt struct {
+	Token token.Token // token.HEREINAFTER
+	Name  *Identifier
+	Value Expr
+}
+
+func (s *DeclStmt) whStmtNode()    {}
+func (s *DeclStmt) String() string { return s.Token.Lit }
+
 // Statements that can occur in Resolved clauses implement the ResolvedStmt interface.
 type ResolvedStmt interface {
 	Node

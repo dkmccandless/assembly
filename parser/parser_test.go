@@ -44,6 +44,21 @@ func TestParseResolution(t *testing.T) {
 			},
 			nil,
 		},
+		{
+			`title whereas resolved publish "Hello, World!"`,
+			&ast.Resolution{
+				ResolvedStmts: []ast.ResolvedStmt{
+					&ast.PublishStmt{
+						Token: token.Token{Typ: token.PUBLISH, Lit: "publish"},
+						Value: &ast.StringLiteral{
+							Token: token.Token{Typ: token.STRING, Lit: "Hello, World!"},
+							Value: "Hello, World!",
+						},
+					},
+				},
+			},
+			nil,
+		},
 	} {
 		p := New(lexer.New(test.input))
 		if ast, err := p.ParseResolution(); !reflect.DeepEqual(ast, test.ast) || err != test.err {
@@ -89,6 +104,49 @@ func TestParseDeclStmt(t *testing.T) {
 		p := New(lexer.New(test.input))
 		if got := p.parseDeclStmt(); !reflect.DeepEqual(got, test.want) {
 			t.Errorf("parseDeclStmt(%v): got %#v, want %#v", test.input, got, test.want)
+		}
+	}
+}
+
+func TestParsePublishStmt(t *testing.T) {
+	for _, test := range []struct {
+		input string
+		want  *ast.PublishStmt
+	}{
+		{
+			`publish "Hello, World!"`,
+			&ast.PublishStmt{
+				Token: token.Token{Typ: token.PUBLISH, Lit: "publish"},
+				Value: &ast.StringLiteral{
+					Token: token.Token{Typ: token.STRING, Lit: "Hello, World!"},
+					Value: "Hello, World!",
+				},
+			},
+		},
+		{
+			"publish forty-two (42)",
+			&ast.PublishStmt{
+				Token: token.Token{Typ: token.PUBLISH, Lit: "publish"},
+				Value: &ast.IntegerLiteral{
+					Token: token.Token{Typ: token.INTEGER, Lit: "42"},
+					Value: 42,
+				},
+			},
+		},
+		{
+			"publish said Message",
+			&ast.PublishStmt{
+				Token: token.Token{Typ: token.PUBLISH, Lit: "publish"},
+				Value: &ast.Identifier{
+					Token: token.Token{Typ: token.IDENT, Lit: "Message"},
+					Value: "Message",
+				},
+			},
+		},
+	} {
+		p := New(lexer.New(test.input))
+		if got := p.parsePublishStmt(); !reflect.DeepEqual(got, test.want) {
+			t.Errorf("parsePublishStmt(%v): got %#v, want %#v", test.input, got, test.want)
 		}
 	}
 }

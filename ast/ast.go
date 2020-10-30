@@ -38,6 +38,14 @@ type ResolvedStmt interface {
 	resStmtNode()
 }
 
+type PublishStmt struct {
+	Token token.Token // token.PUBLISH
+	Value Expr
+}
+
+func (s *PublishStmt) resStmtNode()   {}
+func (s *PublishStmt) String() string { return s.Token.Lit }
+
 // Expressions implement the Expr interface.
 type Expr interface {
 	Node

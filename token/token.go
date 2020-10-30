@@ -40,6 +40,7 @@ const (
 	WHEREAS
 	RESOLVED
 	HEREINAFTER
+	PUBLISH
 )
 
 var keywords = map[string]Type{
@@ -83,6 +84,7 @@ var keywords = map[string]Type{
 	"whereas":     WHEREAS,
 	"resolved":    RESOLVED,
 	"hereinafter": HEREINAFTER,
+	"publish":     PUBLISH,
 }
 
 // Lookup maps s to its keyword Type, if any,

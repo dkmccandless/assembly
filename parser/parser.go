@@ -82,6 +82,9 @@ func (p *Parser) ParseResolution() (*ast.Resolution, error) {
 				}
 			}
 			haveResolved = true
+			if stmt := p.parseResolvedStmt(); stmt != nil {
+				res.ResolvedStmts = append(res.ResolvedStmts, stmt)
+			}
 		}
 		p.next()
 	}
@@ -112,6 +115,33 @@ func (p *Parser) parseDeclStmt() *ast.DeclStmt {
 		p.next()
 	}
 	s.Name = p.parseIdentifier()
+	p.next()
+	for !p.cur.IsCardinal() && !p.curIs(token.STRING) && !p.curIs(token.IDENT) {
+		p.next()
+	}
+	var err error
+	s.Value, err = p.ParseExpr()
+	if err != nil {
+		return nil
+	}
+	return s
+}
+
+func (p *Parser) parseResolvedStmt() ast.ResolvedStmt {
+	if !p.peekIs(token.PUBLISH) {
+		return nil
+	}
+	p.next()
+	switch p.cur.Typ {
+	case token.PUBLISH:
+		return p.parsePublishStmt()
+	default:
+		return nil
+	}
+}
+
+func (p *Parser) parsePublishStmt() *ast.PublishStmt {
+	s := &ast.PublishStmt{Token: p.cur}
 	p.next()
 	for !p.cur.IsCardinal() && !p.curIs(token.STRING) && !p.curIs(token.IDENT) {
 		p.next()

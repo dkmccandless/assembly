@@ -135,11 +135,22 @@ func TestNext(t *testing.T) {
 			},
 		},
 		{
+			input: `RESOLVED that this Assembly directs the Secretary to publish "Hello, World!".`,
+			tokens: []token.Token{
+				{token.RESOLVED, "RESOLVED"},
+				{token.IDENT, "Assembly"},
+				{token.IDENT, "Secretary"},
+				{token.PUBLISH, "publish"},
+				{token.STRING, "Hello, World!"},
+				{token.EOF, ""},
+			},
+		},
+		{
 			input: `A Resolution Concerning Commentary
 
 WHEREAS a resolution consisting entirely of comments has no effect: now, therefore, 
 
-BE IT RESOLVED that this assembly takes no action.`,
+BE IT RESOLVED that this Assembly takes no action.`,
 			tokens: []token.Token{
 				{token.IDENT, "A"},
 				{token.IDENT, "Resolution"},
@@ -149,7 +160,37 @@ BE IT RESOLVED that this assembly takes no action.`,
 				{token.IDENT, "BE"}, // TODO
 				{token.IDENT, "IT"}, // TODO
 				{token.RESOLVED, "RESOLVED"},
+				{token.IDENT, "Assembly"},
 				{token.EOF, ""},
+			},
+		},
+		{
+			input: `A Resolution Concerning Initial Greetings
+
+WHEREAS the Customary Greeting (hereinafter Greeting) is "Hello, World!": now, therefore,
+
+BE IT RESOLVED that this Assembly directs the Secretary to publish said Greeting.`,
+			tokens: []token.Token{
+				{token.IDENT, "A"},
+				{token.IDENT, "Resolution"},
+				{token.IDENT, "Concerning"},
+				{token.IDENT, "Initial"},
+				{token.IDENT, "Greetings"},
+				{token.WHEREAS, "WHEREAS"},
+				{token.IDENT, "Customary"},
+				{token.IDENT, "Greeting"},
+				{token.LPAREN, "("},
+				{token.HEREINAFTER, "hereinafter"},
+				{token.IDENT, "Greeting"},
+				{token.RPAREN, ")"},
+				{token.STRING, "Hello, World!"},
+				{token.IDENT, "BE"},
+				{token.IDENT, "IT"},
+				{token.RESOLVED, "RESOLVED"},
+				{token.IDENT, "Assembly"},
+				{token.IDENT, "Secretary"},
+				{token.PUBLISH, "publish"},
+				{token.IDENT, "Greeting"},
 			},
 		},
 	}

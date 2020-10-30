@@ -17,6 +17,8 @@ type Resolution struct {
 	ResolvedStmts []ResolvedStmt
 }
 
+func (r *Resolution) String() string { return "" }
+
 // Statements that can occur in Whereas clauses implement the WhereasStmt interface.
 type WhereasStmt interface {
 	Node

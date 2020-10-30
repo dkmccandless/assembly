@@ -49,7 +49,7 @@ var (
 // If parsing fails, it returns an error explaining why.
 func (p *Parser) ParseResolution() (*ast.Resolution, error) {
 	// The Resolution must begin with a title.
-	if !p.curIs(token.COMMENT) {
+	if !p.curIs(token.COMMENT) && !p.curIs(token.IDENT) {
 		return nil, errNoTitle
 	}
 
@@ -96,8 +96,11 @@ func (p *Parser) ParseResolution() (*ast.Resolution, error) {
 }
 
 func (p *Parser) parseWhereasStmt() ast.WhereasStmt {
-	if !p.peekIs(token.HEREINAFTER) {
-		return nil
+	for !p.peekIs(token.HEREINAFTER) {
+		if p.peekIs(token.WHEREAS) || p.peekIs(token.RESOLVED) || p.peekIs(token.EOF) {
+			return nil
+		}
+		p.next()
 	}
 	p.next()
 	switch p.cur.Typ {
@@ -128,8 +131,11 @@ func (p *Parser) parseDeclStmt() *ast.DeclStmt {
 }
 
 func (p *Parser) parseResolvedStmt() ast.ResolvedStmt {
-	if !p.peekIs(token.PUBLISH) {
-		return nil
+	for !p.peekIs(token.PUBLISH) {
+		if p.peekIs(token.WHEREAS) || p.peekIs(token.RESOLVED) || p.peekIs(token.EOF) {
+			return nil
+		}
+		p.next()
 	}
 	p.next()
 	switch p.cur.Typ {

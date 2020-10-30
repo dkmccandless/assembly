@@ -27,6 +27,13 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		if val := Eval(node.Value, env); val != nil {
 			fmt.Println(val.Inspect())
 		}
+	case *ast.Resolution:
+		for _, wh := range node.WhereasStmts {
+			Eval(wh, env)
+		}
+		for _, res := range node.ResolvedStmts {
+			Eval(res, env)
+		}
 	}
 	return nil
 }

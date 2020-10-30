@@ -38,6 +38,7 @@ func (p *Parser) peekIs(typ token.Type) bool { return p.peek.Typ == typ }
 
 var (
 	// Resolution parsing failure errors
+	errNoTitle       = errors.New("no title")
 	errEarlyResolved = errors.New("no Whereas clause before Resolved clause")
 	errLateWhereas   = errors.New("Whereas clause after Resolved clause")
 	errNoResolved    = errors.New("no Resolved clause")
@@ -47,6 +48,11 @@ var (
 // ParseResolution parses a Resolution.
 // If parsing fails, it returns an error explaining why.
 func (p *Parser) ParseResolution() (*ast.Resolution, error) {
+	// The Resolution must begin with a title.
+	if !p.curIs(token.COMMENT) {
+		return nil, errNoTitle
+	}
+
 	res := &ast.Resolution{}
 
 	// All Whereas clauses must precede all Resolved clauses, and there must be at least one of each.

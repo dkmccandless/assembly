@@ -16,11 +16,15 @@ func TestParseResolution(t *testing.T) {
 		ast   *ast.Resolution
 		err   error
 	}{
-		{"whereas", nil, errNoResolved},
-		{"resolved", nil, errNoWhereas},
-		{"resolved whereas resolved", nil, errEarlyResolved},
-		{"whereas resolved whereas", nil, errLateWhereas},
-		{"whereas resolved", &ast.Resolution{}, nil},
+		{"whereas", nil, errNoTitle},
+		{"title whereas", nil, errNoResolved},
+		{"title resolved", nil, errNoWhereas},
+		{"title resolved whereas resolved", nil, errEarlyResolved},
+		{"title whereas resolved whereas", nil, errLateWhereas},
+		{"title whereas resolved", &ast.Resolution{}, nil},
+		{"title whereas whereas resolved", &ast.Resolution{}, nil},
+		{"title whereas resolved resolved", &ast.Resolution{}, nil},
+		{"title whereas whereas resolved resolved", &ast.Resolution{}, nil},
 	} {
 		p := New(lexer.New(test.input))
 		if ast, err := p.ParseResolution(); !reflect.DeepEqual(ast, test.ast) || err != test.err {

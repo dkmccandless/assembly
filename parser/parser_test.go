@@ -33,6 +33,25 @@ func TestParseResolution(t *testing.T) {
 	}
 }
 
+var identifierTests = []string{
+	"Greeting",
+	"Quantity",
+	"Answer",
+}
+
+func TestParseIdentifier(t *testing.T) {
+	for _, test := range identifierTests {
+		want := &ast.Identifier{
+			Token: token.Token{Typ: token.IDENT, Lit: test},
+			Value: test,
+		}
+		p := New(lexer.New(test))
+		if got := p.parseIdentifier(); !reflect.DeepEqual(got, want) {
+			t.Errorf("parseIdentifier(%v): got %#v, want %#v", test, got, want)
+		}
+	}
+}
+
 var stringTests = []string{
 	"",
 	"WHEREAS",
@@ -83,6 +102,20 @@ func TestParseExpr(t *testing.T) {
 		}
 		if e.Value != test {
 			t.Errorf("ParseExpr(%v): got %v", input, e.Value)
+		}
+	}
+	for _, test := range identifierTests {
+		p := New(lexer.New(test))
+		expr, err := p.ParseExpr()
+		if err != nil {
+			t.Errorf("ParseExpr(%v): got error %v", test, err)
+		}
+		e, ok := expr.(*ast.Identifier)
+		if !ok {
+			t.Errorf("ParseExpr(%v): got %T (%+v)", test, expr, expr)
+		}
+		if e.Value != test {
+			t.Errorf("ParseExpr(%v): got %v", test, e.Value)
 		}
 	}
 }

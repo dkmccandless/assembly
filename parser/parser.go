@@ -97,9 +97,15 @@ func (p *Parser) ParseExpr() (ast.Expr, error) {
 		return p.parseIntegerLiteral()
 	case p.curIs(token.STRING):
 		return p.parseStringLiteral(), nil
+	case p.curIs(token.IDENT):
+		return p.parseIdentifier(), nil
 	default:
 		return nil, errors.New("unrecognized expression")
 	}
+}
+
+func (p *Parser) parseIdentifier() ast.Expr {
+	return &ast.Identifier{Token: p.cur, Value: p.cur.Lit}
 }
 
 func (p *Parser) parseStringLiteral() ast.Expr {

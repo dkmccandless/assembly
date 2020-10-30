@@ -35,6 +35,14 @@ type Expr interface {
 	exprNode()
 }
 
+type Identifier struct {
+	Token token.Token // token.IDENT
+	Value string
+}
+
+func (e *Identifier) exprNode()      {}
+func (e *Identifier) String() string { return e.Value }
+
 type IntegerLiteral struct {
 	Token token.Token // token.INTEGER
 	Value int64

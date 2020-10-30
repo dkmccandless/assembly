@@ -17,6 +17,7 @@ const (
 	COMMENT
 
 	// Identifiers and type literals
+	IDENT
 	INTEGER
 	NUMERAL
 	STRING
@@ -82,11 +83,16 @@ var keywords = map[string]Type{
 	"resolved": RESOLVED,
 }
 
-// Lookup maps s to its keyword Type, if any, or else to COMMENT.
+// Lookup maps s to its keyword Type, if any,
+// or else to IDENT if it begins with a capital letter
+// or COMMENT otherwise.
 func Lookup(s string) Type {
 	lower := strings.ToLower(s)
 	if typ, ok := keywords[lower]; ok {
 		return typ
+	}
+	if 'A' <= s[0] && s[0] <= 'Z' {
+		return IDENT
 	}
 	return COMMENT
 }

@@ -113,13 +113,40 @@ func TestNext(t *testing.T) {
 			},
 		},
 		{
+			input: "WHEREAS an Identifier is capitalized",
+			tokens: []token.Token{
+				{token.WHEREAS, "WHEREAS"},
+				{token.IDENT, "Identifier"},
+				{token.EOF, ""},
+			},
+		},
+		{
+			input: `WHEREAS the Customary Greeting (hereinafter Greeting) is "Hello, World!":`,
+			tokens: []token.Token{
+				{token.WHEREAS, "WHEREAS"},
+				{token.IDENT, "Customary"},
+				{token.IDENT, "Greeting"},
+				{token.LPAREN, "("},
+				{token.IDENT, "Greeting"},
+				{token.RPAREN, ")"},
+				{token.STRING, "Hello, World!"},
+				{token.EOF, ""},
+			},
+		},
+		{
 			input: `A Resolution Concerning Commentary
 
 WHEREAS a resolution consisting entirely of comments has no effect: now, therefore, 
 
 BE IT RESOLVED that this assembly takes no action.`,
 			tokens: []token.Token{
+				{token.IDENT, "A"},
+				{token.IDENT, "Resolution"},
+				{token.IDENT, "Concerning"},
+				{token.IDENT, "Commentary"},
 				{token.WHEREAS, "WHEREAS"},
+				{token.IDENT, "BE"}, // TODO
+				{token.IDENT, "IT"}, // TODO
 				{token.RESOLVED, "RESOLVED"},
 				{token.EOF, ""},
 			},

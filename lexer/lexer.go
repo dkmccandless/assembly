@@ -1,8 +1,13 @@
 package lexer
 
 import (
+	"errors"
+
 	"github.com/dkmccandless/assembly/token"
 )
+
+// errQuote indicates that a string literal is not terminated with a closing quotation mark before EOF.
+var errQuote = errors.New("no closing quotation mark")
 
 // Lexer tokenizes an input string.
 type Lexer struct {
@@ -31,16 +36,20 @@ func (l *Lexer) readChar() {
 }
 
 // Next returns the next token.Token in l.
-func (l *Lexer) Next() token.Token {
+// It returns an error if a string literal does not end with a closing quotation mark.
+func (l *Lexer) Next() (token.Token, error) {
 	l.skipWhitespace()
 	var t token.Token
 	switch l.ch {
 	case 0:
-		return token.Token{token.EOF, ""}
+		return token.Token{token.EOF, ""}, nil
 	case '"':
-		// TODO: return error for no closing quotation mark
 		l.readChar()
-		t = token.Token{token.STRING, l.scanString()}
+		lit, err := l.scanString()
+		t = token.Token{token.STRING, lit}
+		if err != nil {
+			return t, err
+		}
 	case '(':
 		t = token.Token{token.LPAREN, "("}
 	case ')':
@@ -48,23 +57,23 @@ func (l *Lexer) Next() token.Token {
 	case '-':
 		l.readChar()
 		if isNumeral(l.ch) {
-			return token.Token{token.NUMERAL, "-" + l.scan(isNumeral)}
+			return token.Token{token.NUMERAL, "-" + l.scan(isNumeral)}, nil
 		}
-		return token.Token{token.DASH, "-"}
+		return token.Token{token.DASH, "-"}, nil
 	default:
 		switch {
 		case isLetter(l.ch):
 			lit := l.scan(isLetter)
-			return token.Token{token.Lookup(lit), lit}
+			return token.Token{token.Lookup(lit), lit}, nil
 		case isDigit(l.ch):
 			lit := l.scan(isNumeral)
-			return token.Token{token.NUMERAL, lit}
+			return token.Token{token.NUMERAL, lit}, nil
 		default:
 			t = token.Token{token.COMMENT, string(l.ch)}
 		}
 	}
 	l.readChar()
-	return t
+	return t, nil
 }
 
 // scan advances l through all consecutive bytes that satisfy f and returns a string of the bytes read.
@@ -78,13 +87,13 @@ func (l *Lexer) scan(f func(b byte) bool) string {
 }
 
 // scanString advances l through consecutive bytes, stopping at a quotation mark or EOF, and returns a string of the bytes read.
-func (l *Lexer) scanString() string {
-	var s string
-	for l.ch != '"' && l.ch != 0 {
-		s += string(l.ch)
-		l.readChar()
+// It returns errQuote if a closing quotation mark is not found before EOF.
+func (l *Lexer) scanString() (string, error) {
+	s := l.scan(func(b byte) bool { return b != '"' && b != 0 })
+	if l.ch == 0 {
+		return s, errQuote
 	}
-	return s
+	return s, nil
 }
 
 func (l *Lexer) skipWhitespace() {

@@ -198,9 +198,12 @@ BE IT RESOLVED that this Assembly directs the Secretary to publish said Greeting
 		l := New(test.input)
 		for _, want := range test.tokens {
 			// Disregard comment tokens in input
-			got := l.Next()
-			for got.Typ == token.COMMENT {
-				got = l.Next()
+			got, err := l.Next()
+			for got.Typ == token.COMMENT && err == nil {
+				got, err = l.Next()
+			}
+			if err != nil {
+				t.Fatalf("Next(%v): unexpected error: %v", test.input, err)
 			}
 
 			if got != want {
@@ -234,6 +237,29 @@ func TestScan(t *testing.T) {
 		l := New(test.input)
 		if got := l.scan(test.f); got != test.want {
 			t.Errorf("scan(%v): got %v, want %v", test.input, got, test.want)
+		}
+	}
+}
+
+func TestScanString(t *testing.T) {
+	for _, test := range []struct {
+		input   string
+		want    string
+		wanterr error
+	}{
+		{`"`, "", errQuote},
+		{`""`, "", nil},
+		{`"a"`, "a", nil},
+		{`"Greetings, Assembly."`, "Greetings, Assembly.", nil},
+		{`"Unterminated quotation`, "Unterminated quotation", errQuote},
+	} {
+		l := New(test.input)
+		if l.ch != '"' {
+			t.Fatalf("ScanString(%v): missing opening quotation mark", test.input)
+		}
+		l.readChar()
+		if got, err := l.scanString(); got != test.want || err != test.wanterr {
+			t.Errorf("scanString(%v): got %v, %v; want %v, %v", test.input, got, err, test.want, test.wanterr)
 		}
 	}
 }

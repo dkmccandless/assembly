@@ -57,7 +57,13 @@ func New(l *lexer.Lexer) *Parser {
 }
 
 // next consumes the next token from p.l.
-func (p *Parser) next() { p.cur, p.peek = p.peek, p.l.Next() }
+func (p *Parser) next() {
+	p.cur = p.peek
+	var err error
+	if p.peek, err = p.l.Next(); err != nil {
+		p.error(err)
+	}
+}
 
 // curIs reports whether the Type of p.cur is typ.
 func (p *Parser) curIs(typ token.Type) bool { return p.cur.Typ == typ }

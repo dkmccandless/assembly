@@ -10,6 +10,14 @@ import (
 	"github.com/dkmccandless/assembly/token"
 )
 
+// lastError returns the last error in p.errors, or nil if no errors were recorded.
+func (p *Parser) lastError() error {
+	if len(p.errors) != 0 {
+		return p.errors[len(p.errors)-1]
+	}
+	return nil
+}
+
 func TestParseResolution(t *testing.T) {
 	for _, test := range []struct {
 		input string
@@ -61,7 +69,12 @@ func TestParseResolution(t *testing.T) {
 		},
 	} {
 		p := New(lexer.New(test.input))
-		if ast, err := p.ParseResolution(); !reflect.DeepEqual(ast, test.ast) || err != test.err {
+		ast, err := p.ParseResolution()
+		if err != nil {
+			// Test the actual value of the last error generated
+			err = p.errors[len(p.errors)-1]
+		}
+		if !reflect.DeepEqual(ast, test.ast) || err != test.err {
 			t.Errorf("ParseResolution(%v): got %v, %v; want %v, %v", test.input, ast, err, test.ast, test.err)
 		}
 	}
@@ -102,7 +115,9 @@ func TestParseDeclStmt(t *testing.T) {
 		},
 	} {
 		p := New(lexer.New(test.input))
-		if got, err := p.parseDeclStmt(); err != nil || !reflect.DeepEqual(got, test.want) {
+		got := p.parseDeclStmt()
+		err := p.lastError()
+		if err != nil || !reflect.DeepEqual(got, test.want) {
 			t.Errorf("parseDeclStmt(%v): got %#v, %v, want %#v", test.input, got, err, test.want)
 		}
 	}
@@ -145,7 +160,9 @@ func TestParsePublishStmt(t *testing.T) {
 		},
 	} {
 		p := New(lexer.New(test.input))
-		if got, err := p.parsePublishStmt(); err != nil || !reflect.DeepEqual(got, test.want) {
+		got := p.parsePublishStmt()
+		err := p.lastError()
+		if err != nil || !reflect.DeepEqual(got, test.want) {
 			t.Errorf("parsePublishStmt(%v): got %#v, %v, want %#v", test.input, got, err, test.want)
 		}
 	}
@@ -195,7 +212,8 @@ func TestParseExpr(t *testing.T) {
 	for _, test := range integerTests {
 		input := fmt.Sprintf("%v (%v)", test.car, test.num)
 		p := New(lexer.New(input))
-		expr, err := p.ParseExpr()
+		expr := p.ParseExpr()
+		err := p.lastError()
 		if err != nil {
 			t.Errorf("ParseExpr(%v): got error %v", input, err)
 		}
@@ -210,7 +228,8 @@ func TestParseExpr(t *testing.T) {
 	for _, test := range stringTests {
 		input := fmt.Sprintf("\"%v\"", test)
 		p := New(lexer.New(input))
-		expr, err := p.ParseExpr()
+		expr := p.ParseExpr()
+		err := p.lastError()
 		if err != nil {
 			t.Errorf("ParseExpr(%v): got error %v", input, err)
 		}
@@ -224,7 +243,8 @@ func TestParseExpr(t *testing.T) {
 	}
 	for _, test := range identifierTests {
 		p := New(lexer.New(test))
-		expr, err := p.ParseExpr()
+		expr := p.ParseExpr()
+		err := p.lastError()
 		if err != nil {
 			t.Errorf("ParseExpr(%v): got error %v", test, err)
 		}

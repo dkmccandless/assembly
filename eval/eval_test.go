@@ -93,10 +93,7 @@ func TestEvalIntegerExpr(t *testing.T) {
 		{"negative nine quintillion two hundred twenty-three quadrillion three hundred seventy-two trillion thirty-six billion eight hundred fifty-four million seven hundred seventy-five thousand eight hundred eight (-9,223,372,036,854,775,808)", math.MinInt64},
 		{"nine quintillion two hundred twenty-three quadrillion three hundred seventy-two trillion thirty-six billion eight hundred fifty-four million seven hundred seventy-five thousand eight hundred seven (9,223,372,036,854,775,807)", math.MaxInt64},
 	} {
-		node, err := parser.New(lexer.New(test.input)).ParseExpr()
-		if err != nil {
-			t.Errorf("EvalIntegerExpr(%v): got error %v", node, err)
-		}
+		node := parser.New(lexer.New(test.input)).ParseExpr()
 		obj, ok := Eval(node, object.NewEnvironment()).(*object.Integer)
 		if !ok {
 			t.Errorf("EvalIntegerExpr(%v): got %T (%+v)", test.input, obj, obj)
@@ -115,10 +112,7 @@ func TestEvalStringExpr(t *testing.T) {
 		"Greetings, Assembly.",
 	} {
 		input := fmt.Sprintf("\"%v\"", test)
-		node, err := parser.New(lexer.New(input)).ParseExpr()
-		if err != nil {
-			t.Errorf("EvalStringExpr(%v): got error %v", node, err)
-		}
+		node := parser.New(lexer.New(input)).ParseExpr()
 		obj, ok := Eval(node, object.NewEnvironment()).(*object.String)
 		if !ok {
 			t.Errorf("EvalStringExpr(%v): got %T (%+v)", test, obj, obj)
@@ -135,10 +129,7 @@ func TestEvalIdentifier(t *testing.T) {
 		"Quantity",
 		"Answer",
 	} {
-		node, err := parser.New(lexer.New(test)).ParseExpr()
-		if err != nil {
-			t.Errorf("EvalIdentifier(%v): got error %v", node, err)
-		}
+		node := parser.New(lexer.New(test)).ParseExpr()
 		env := object.NewEnvironment()
 		if obj := Eval(node, env); obj != nil {
 			t.Errorf("EvalIdentifier(%v): got %T (%+v) before Set", test, obj, obj)

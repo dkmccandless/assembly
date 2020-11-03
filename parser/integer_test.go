@@ -337,7 +337,9 @@ func TestParseIntegerLiteral(t *testing.T) {
 			Value: test.n,
 		}
 		p := New(lexer.New(input))
-		if got, err := p.parseIntegerLiteral(); !reflect.DeepEqual(got, want) || err != nil {
+		got := p.parseIntegerLiteral()
+		err := p.lastError()
+		if !reflect.DeepEqual(got, want) || err != nil {
 			t.Errorf("parseIntegerLiteral(%v): got %v, %v; want %v", input, got, err, test.n)
 		}
 	}
@@ -358,7 +360,9 @@ func TestParseInvalidIntegerLiteral(t *testing.T) {
 		{"three hundred sixty-five (366)", errDisagree}, // magnitude of cardinal and numeral must agree
 	} {
 		p := New(lexer.New(test.input))
-		if got, err := p.parseIntegerLiteral(); got != nil || err != test.want {
+		got := p.parseIntegerLiteral()
+		err := p.lastError()
+		if got != nil || err != test.want {
 			t.Errorf("parseIntegerLiteral(%v): got %v, %v; want %v", test.input, got, err, test.want)
 		}
 	}

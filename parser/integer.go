@@ -22,40 +22,48 @@ var (
 	errDisagree = errors.New("cardinal and numeral disagree")
 )
 
-func (p *Parser) parseIntegerLiteral() (ast.Expr, error) {
+func (p *Parser) parseIntegerLiteral() ast.Expr {
 	if p.curIs(token.NUMERAL) {
-		return nil, errInteger
+		p.error(errInteger)
+		return nil
 	}
+
 	c, err := p.parseCardinalLiteral()
 	if err != nil {
-		return nil, err
+		p.error(err)
+		return nil
 	}
 
 	if !p.peekIs(token.LPAREN) {
-		return nil, errInteger
+		p.error(errInteger)
+		return nil
 	}
 	p.next()
 
 	if !p.peekIs(token.NUMERAL) && !p.peekIs(token.DASH) {
-		return nil, errInteger
+		p.error(errInteger)
+		return nil
 	}
 	p.next()
 
 	n, err := p.parseNumeralLiteral()
 	if err != nil {
-		return nil, err
+		p.error(err)
+		return nil
 	}
 
 	if !p.peekIs(token.RPAREN) {
-		return nil, errInteger
+		p.error(errInteger)
+		return nil
 	}
 	p.next()
 
 	if c != n {
-		return nil, errDisagree
+		p.error(errDisagree)
+		return nil
 	}
 
-	return &ast.IntegerLiteral{Token: token.Token{token.INTEGER, strconv.Itoa(int(n))}, Value: n}, nil
+	return &ast.IntegerLiteral{Token: token.Token{token.INTEGER, strconv.Itoa(int(n))}, Value: n}
 }
 
 func (p *Parser) parseCardinalLiteral() (int64, error) {

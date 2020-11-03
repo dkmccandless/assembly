@@ -2,15 +2,44 @@ package parser
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/dkmccandless/assembly/ast"
 	"github.com/dkmccandless/assembly/lexer"
 	"github.com/dkmccandless/assembly/token"
 )
 
+// ErrorList is a list of parsing errors.
+// The zero value is an empty ErrorList ready to use.
+type ErrorList []error
+
+// Add adds an error to an ErrorList.
+func (el ErrorList) Add(err error) { el = append(el, err) }
+
+// Err returns an error equivalent to el, or nil if el is empty.
+func (el ErrorList) Err() error {
+	if len(el) == 0 {
+		return nil
+	}
+	return el
+}
+
+// ErrorList implements the error interface.
+func (el ErrorList) Error() string {
+	switch len(el) {
+	case 0:
+		return "no errors"
+	case 1:
+		return el[0].Error()
+	default:
+		return fmt.Sprintf("%s (and %v more errors)", el[0], len(el)-1)
+	}
+}
+
 // Parser parses tokens from a Lexer into an abstract syntax tree.
 type Parser struct {
-	l *lexer.Lexer
+	l      *lexer.Lexer
+	errors ErrorList
 
 	// cur holds the current token to be parsed.
 	cur token.Token
@@ -36,6 +65,9 @@ func (p *Parser) curIs(typ token.Type) bool { return p.cur.Typ == typ }
 // peekIs reports whether the Type of p.peek is typ.
 func (p *Parser) peekIs(typ token.Type) bool { return p.peek.Typ == typ }
 
+// error adds err to p's ErrorList.
+func (p *Parser) error(err error) { p.errors = append(p.errors, err) }
+
 var (
 	// Resolution parsing failure errors
 	errNoTitle       = errors.New("no title")
@@ -50,7 +82,8 @@ var (
 func (p *Parser) ParseResolution() (*ast.Resolution, error) {
 	// The Resolution must begin with a title.
 	if !p.curIs(token.COMMENT) && !p.curIs(token.IDENT) {
-		return nil, errNoTitle
+		p.error(errNoTitle)
+		return nil, p.errors.Err()
 	}
 
 	res := &ast.Resolution{}
@@ -62,51 +95,44 @@ func (p *Parser) ParseResolution() (*ast.Resolution, error) {
 		switch p.cur.Typ {
 		case token.WHEREAS:
 			if haveResolved {
-				return nil, errLateWhereas
+				p.error(errLateWhereas)
+				return nil, p.errors.Err()
 			}
 			haveWhereas = true
-			stmt, err := p.parseWhereasStmt()
-			if err != nil {
-				return nil, err
-			}
-			if stmt != nil {
+			if stmt := p.parseWhereasStmt(); stmt != nil {
 				res.WhereasStmts = append(res.WhereasStmts, stmt)
 			}
 		case token.RESOLVED:
 			if !haveWhereas {
-				for {
-					switch p.cur.Typ {
-					case token.EOF:
-						return nil, errNoWhereas
-					case token.WHEREAS:
-						return nil, errEarlyResolved
-					default:
-						p.next()
+				for !p.curIs(token.EOF) {
+					if p.curIs(token.WHEREAS) {
+						p.error(errEarlyResolved)
+						return nil, p.errors.Err()
 					}
+					p.next()
 				}
+				p.error(errNoWhereas)
+				return nil, p.errors.Err()
 			}
 			haveResolved = true
-			stmt, err := p.parseResolvedStmt()
-			if err != nil {
-				return nil, err
-			}
-			if stmt != nil {
+			if stmt := p.parseResolvedStmt(); stmt != nil {
 				res.ResolvedStmts = append(res.ResolvedStmts, stmt)
 			}
 		}
 		p.next()
 	}
 	if !haveResolved {
-		return nil, errNoResolved
+		p.error(errNoResolved)
+		return nil, p.errors.Err()
 	}
 
-	return res, nil
+	return res, p.errors.Err()
 }
 
-func (p *Parser) parseWhereasStmt() (ast.WhereasStmt, error) {
+func (p *Parser) parseWhereasStmt() ast.WhereasStmt {
 	for !p.peekIs(token.HEREINAFTER) {
 		if p.peekIs(token.WHEREAS) || p.peekIs(token.RESOLVED) || p.peekIs(token.EOF) {
-			return nil, nil
+			return nil
 		}
 		p.next()
 	}
@@ -115,11 +141,11 @@ func (p *Parser) parseWhereasStmt() (ast.WhereasStmt, error) {
 	case token.HEREINAFTER:
 		return p.parseDeclStmt()
 	default:
-		return nil, nil
+		return nil
 	}
 }
 
-func (p *Parser) parseDeclStmt() (*ast.DeclStmt, error) {
+func (p *Parser) parseDeclStmt() *ast.DeclStmt {
 	s := &ast.DeclStmt{Token: p.cur}
 	p.next()
 	for !p.curIs(token.IDENT) {
@@ -130,18 +156,14 @@ func (p *Parser) parseDeclStmt() (*ast.DeclStmt, error) {
 	for !p.cur.IsCardinal() && !p.curIs(token.NUMERAL) && !p.curIs(token.STRING) && !p.curIs(token.IDENT) {
 		p.next()
 	}
-	var err error
-	s.Value, err = p.ParseExpr()
-	if err != nil {
-		return nil, err
-	}
-	return s, nil
+	s.Value = p.ParseExpr()
+	return s
 }
 
-func (p *Parser) parseResolvedStmt() (ast.ResolvedStmt, error) {
+func (p *Parser) parseResolvedStmt() ast.ResolvedStmt {
 	for !p.peekIs(token.PUBLISH) {
 		if p.peekIs(token.WHEREAS) || p.peekIs(token.RESOLVED) || p.peekIs(token.EOF) {
-			return nil, nil
+			return nil
 		}
 		p.next()
 	}
@@ -150,39 +172,35 @@ func (p *Parser) parseResolvedStmt() (ast.ResolvedStmt, error) {
 	case token.PUBLISH:
 		return p.parsePublishStmt()
 	default:
-		return nil, nil
+		return nil
 	}
 }
 
-func (p *Parser) parsePublishStmt() (*ast.PublishStmt, error) {
+func (p *Parser) parsePublishStmt() *ast.PublishStmt {
 	s := &ast.PublishStmt{Token: p.cur}
 	p.next()
 	for !p.cur.IsCardinal() && !p.curIs(token.STRING) && !p.curIs(token.IDENT) {
 		p.next()
 	}
-	var err error
-	s.Value, err = p.ParseExpr()
-	if err != nil {
-		return nil, err
-	}
-	return s, nil
+	s.Value = p.ParseExpr()
+	return s
 }
 
 // ParseExpr parses an expression.
-// If parsing fails, it returns an error explaining why.
-func (p *Parser) ParseExpr() (ast.Expr, error) {
+func (p *Parser) ParseExpr() ast.Expr {
 	switch {
 	case p.cur.IsCardinal():
 		return p.parseIntegerLiteral()
 	case p.curIs(token.NUMERAL):
-		// Let parseIntegerLiteral return an error
+		// Let parseIntegerLiteral the syntax error
 		return p.parseIntegerLiteral()
 	case p.curIs(token.STRING):
-		return p.parseStringLiteral(), nil
+		return p.parseStringLiteral()
 	case p.curIs(token.IDENT):
-		return p.parseIdentifier(), nil
+		return p.parseIdentifier()
 	default:
-		return nil, errors.New("unrecognized expression")
+		p.error(errors.New("unrecognized expression"))
+		return nil
 	}
 }
 

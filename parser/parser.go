@@ -36,10 +36,21 @@ func (el ErrorList) Error() string {
 	}
 }
 
+type usage int
+
+const (
+	undeclared usage = iota
+	declared
+	used
+)
+
 // Parser parses tokens from a Lexer into an abstract syntax tree.
 type Parser struct {
 	l      *lexer.Lexer
 	errors ErrorList
+
+	// idents contains all declared identifiers and records whether each has been used.
+	idents map[string]usage
 
 	// cur holds the current token to be parsed.
 	cur token.Token
@@ -50,7 +61,10 @@ type Parser struct {
 
 // New returns a pointer to a Parser that parses tokens from l.
 func New(l *lexer.Lexer) *Parser {
-	p := &Parser{l: l}
+	p := &Parser{
+		l:      l,
+		idents: make(map[string]usage),
+	}
 	p.next()
 	p.next()
 	return p
@@ -82,6 +96,24 @@ var (
 	errNoResolved    = errors.New("no Resolved clause")
 	errNoWhereas     = errors.New("no Whereas clause")
 )
+
+// redeclaredError indicates the redeclaration of an identifier.
+type redeclaredError struct{ ident string }
+
+// redeclaredError implements the error interface.
+func (err redeclaredError) Error() string { return fmt.Sprintf("%s redeclared", err.ident) }
+
+// undeclaredError indicates the attempted usage of an undeclared identifier.
+type undeclaredError struct{ ident string }
+
+// undeclaredError implements the error interface.
+func (err undeclaredError) Error() string { return fmt.Sprintf("%s undeclared", err.ident) }
+
+// unusedError indicates an unused identifier declaration.
+type unusedError struct{ ident string }
+
+// unusedError implements the error interface.
+func (err unusedError) Error() string { return fmt.Sprintf("%s declared but not used", err.ident) }
 
 // ParseResolution parses a Resolution.
 // If parsing fails, it returns an error explaining why.
@@ -131,6 +163,11 @@ func (p *Parser) ParseResolution() (*ast.Resolution, error) {
 		p.error(errNoResolved)
 		return nil, p.errors.Err()
 	}
+	for id := range p.idents {
+		if p.idents[id] != used {
+			p.error(unusedError{id})
+		}
+	}
 
 	return res, p.errors.Err()
 }
@@ -158,6 +195,11 @@ func (p *Parser) parseDeclStmt() *ast.DeclStmt {
 		p.next()
 	}
 	s.Name = p.parseIdentifier()
+	if id := s.Name.Value; p.idents[id] != undeclared {
+		p.error(redeclaredError{id})
+	} else {
+		p.idents[id] = declared
+	}
 	p.next()
 	for !p.cur.IsCardinal() && !p.curIs(token.NUMERAL) && !p.curIs(token.STRING) && !p.curIs(token.IDENT) {
 		p.next()
@@ -187,6 +229,13 @@ func (p *Parser) parsePublishStmt() *ast.PublishStmt {
 	p.next()
 	for !p.cur.IsCardinal() && !p.curIs(token.STRING) && !p.curIs(token.IDENT) {
 		p.next()
+	}
+	if p.curIs(token.IDENT) {
+		if id := p.cur.Lit; p.idents[id] == undeclared {
+			p.error(undeclaredError{id})
+		} else {
+			p.idents[id] = used
+		}
 	}
 	s.Value = p.ParseExpr()
 	return s

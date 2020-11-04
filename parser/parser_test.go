@@ -34,7 +34,37 @@ func TestParseResolution(t *testing.T) {
 		{"title whereas resolved resolved", &ast.Resolution{}, nil},
 		{"title whereas whereas resolved resolved", &ast.Resolution{}, nil},
 		{
-			`title whereas hereinafter Greeting "Hello, World!" resolved`,
+			`title whereas resolved publish "Hello, World!"`,
+			&ast.Resolution{
+				ResolvedStmts: []ast.ResolvedStmt{
+					&ast.PublishStmt{
+						Token: token.Token{Typ: token.PUBLISH, Lit: "publish"},
+						Value: &ast.StringLiteral{
+							Token: token.Token{Typ: token.STRING, Lit: "Hello, World!"},
+							Value: "Hello, World!",
+						},
+					},
+				},
+			},
+			nil,
+		},
+		{
+			`title whereas the Customary Greeting is "Hello, World!" resolved publish Greeting`,
+			&ast.Resolution{
+				ResolvedStmts: []ast.ResolvedStmt{
+					&ast.PublishStmt{
+						Token: token.Token{Typ: token.PUBLISH, Lit: "publish"},
+						Value: &ast.Identifier{
+							Token: token.Token{Typ: token.IDENT, Lit: "Greeting"},
+							Value: "Greeting",
+						},
+					},
+				},
+			},
+			undeclaredError{"Greeting"},
+		},
+		{
+			`title whereas the Customary Greeting (hereinafter Greeting) is "Hello, World!" resolved`,
 			&ast.Resolution{
 				WhereasStmts: []ast.WhereasStmt{
 					&ast.DeclStmt{
@@ -50,17 +80,97 @@ func TestParseResolution(t *testing.T) {
 					},
 				},
 			},
-			nil,
+			unusedError{"Greeting"},
 		},
 		{
-			`title whereas resolved publish "Hello, World!"`,
+			`title whereas the Customary Greeting (hereinafter Greeting) is "Hello, World!" resolved publish "Hello, World!`,
 			&ast.Resolution{
+				WhereasStmts: []ast.WhereasStmt{
+					&ast.DeclStmt{
+						Token: token.Token{Typ: token.HEREINAFTER, Lit: "hereinafter"},
+						Name: &ast.Identifier{
+							Token: token.Token{Typ: token.IDENT, Lit: "Greeting"},
+							Value: "Greeting",
+						},
+						Value: &ast.StringLiteral{
+							Token: token.Token{Typ: token.STRING, Lit: "Hello, World!"},
+							Value: "Hello, World!",
+						},
+					},
+				},
 				ResolvedStmts: []ast.ResolvedStmt{
 					&ast.PublishStmt{
 						Token: token.Token{Typ: token.PUBLISH, Lit: "publish"},
 						Value: &ast.StringLiteral{
 							Token: token.Token{Typ: token.STRING, Lit: "Hello, World!"},
 							Value: "Hello, World!",
+						},
+					},
+				},
+			},
+			unusedError{"Greeting"},
+		},
+		{
+			`title whereas the Customary Greeting (hereinafter Greeting) is "Hello, World!" whereas the Customary Greeting (hereinafter Greeting) is "Hello, World!" resolved publish Greeting`,
+			&ast.Resolution{
+				WhereasStmts: []ast.WhereasStmt{
+					&ast.DeclStmt{
+						Token: token.Token{Typ: token.HEREINAFTER, Lit: "hereinafter"},
+						Name: &ast.Identifier{
+							Token: token.Token{Typ: token.IDENT, Lit: "Greeting"},
+							Value: "Greeting",
+						},
+						Value: &ast.StringLiteral{
+							Token: token.Token{Typ: token.STRING, Lit: "Hello, World!"},
+							Value: "Hello, World!",
+						},
+					},
+					&ast.DeclStmt{
+						Token: token.Token{Typ: token.HEREINAFTER, Lit: "hereinafter"},
+						Name: &ast.Identifier{
+							Token: token.Token{Typ: token.IDENT, Lit: "Greeting"},
+							Value: "Greeting",
+						},
+						Value: &ast.StringLiteral{
+							Token: token.Token{Typ: token.STRING, Lit: "Hello, World!"},
+							Value: "Hello, World!",
+						},
+					},
+				},
+				ResolvedStmts: []ast.ResolvedStmt{
+					&ast.PublishStmt{
+						Token: token.Token{Typ: token.PUBLISH, Lit: "publish"},
+						Value: &ast.Identifier{
+							Token: token.Token{Typ: token.IDENT, Lit: "Greeting"},
+							Value: "Greeting",
+						},
+					},
+				},
+			},
+			redeclaredError{"Greeting"},
+		},
+		{
+			`title whereas the Customary Greeting (hereinafter Greeting) is "Hello, World!" resolved publish Greeting`,
+			&ast.Resolution{
+				WhereasStmts: []ast.WhereasStmt{
+					&ast.DeclStmt{
+						Token: token.Token{Typ: token.HEREINAFTER, Lit: "hereinafter"},
+						Name: &ast.Identifier{
+							Token: token.Token{Typ: token.IDENT, Lit: "Greeting"},
+							Value: "Greeting",
+						},
+						Value: &ast.StringLiteral{
+							Token: token.Token{Typ: token.STRING, Lit: "Hello, World!"},
+							Value: "Hello, World!",
+						},
+					},
+				},
+				ResolvedStmts: []ast.ResolvedStmt{
+					&ast.PublishStmt{
+						Token: token.Token{Typ: token.PUBLISH, Lit: "publish"},
+						Value: &ast.Identifier{
+							Token: token.Token{Typ: token.IDENT, Lit: "Greeting"},
+							Value: "Greeting",
 						},
 					},
 				},
@@ -160,6 +270,7 @@ func TestParsePublishStmt(t *testing.T) {
 		},
 	} {
 		p := New(lexer.New(test.input))
+		p.idents["Message"] = declared
 		got := p.parsePublishStmt()
 		err := p.lastError()
 		if err != nil || !reflect.DeepEqual(got, test.want) {

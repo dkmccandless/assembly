@@ -115,6 +115,16 @@ type unusedError struct{ ident string }
 // unusedError implements the error interface.
 func (err unusedError) Error() string { return fmt.Sprintf("%s declared but not used", err.ident) }
 
+// markUsed records that ident has been used.
+// If ident was not declared, it records an undeclaredError instead.
+func (p *Parser) markUsed(ident string) {
+	if p.idents[ident] == undeclared {
+		p.error(undeclaredError{ident})
+	} else {
+		p.idents[ident] = used
+	}
+}
+
 // ParseResolution parses a Resolution.
 // If parsing fails, it returns an error explaining why.
 func (p *Parser) ParseResolution() (*ast.Resolution, error) {
@@ -204,6 +214,9 @@ func (p *Parser) parseDeclStmt() *ast.DeclStmt {
 	for !p.cur.IsCardinal() && !p.curIs(token.NUMERAL) && !p.curIs(token.STRING) && !p.curIs(token.IDENT) {
 		p.next()
 	}
+	if p.curIs(token.IDENT) {
+		p.markUsed(p.cur.Lit)
+	}
 	s.Value = p.ParseExpr()
 	return s
 }
@@ -231,11 +244,7 @@ func (p *Parser) parsePublishStmt() *ast.PublishStmt {
 		p.next()
 	}
 	if p.curIs(token.IDENT) {
-		if id := p.cur.Lit; p.idents[id] == undeclared {
-			p.error(undeclaredError{id})
-		} else {
-			p.idents[id] = used
-		}
+		p.markUsed(p.cur.Lit)
 	}
 	s.Value = p.ParseExpr()
 	return s

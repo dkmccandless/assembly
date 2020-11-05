@@ -177,6 +177,90 @@ func TestParseResolution(t *testing.T) {
 			},
 			nil,
 		},
+		{
+			`title
+whereas the Amount in Stock (hereinafter Stock) is ninety-nine (99)
+whereas the Current Quantity (hereinafter Quantity) is Stock
+resolved publish Quantity`,
+			&ast.Resolution{
+				WhereasStmts: []ast.WhereasStmt{
+					&ast.DeclStmt{
+						Token: token.Token{Typ: token.HEREINAFTER, Lit: "hereinafter"},
+						Name: &ast.Identifier{
+							Token: token.Token{Typ: token.IDENT, Lit: "Stock"},
+							Value: "Stock",
+						},
+						Value: &ast.IntegerLiteral{
+							Token: token.Token{Typ: token.INTEGER, Lit: "99"},
+							Value: 99,
+						},
+					},
+					&ast.DeclStmt{
+						Token: token.Token{Typ: token.HEREINAFTER, Lit: "hereinafter"},
+						Name: &ast.Identifier{
+							Token: token.Token{Typ: token.IDENT, Lit: "Quantity"},
+							Value: "Quantity",
+						},
+						Value: &ast.Identifier{
+							Token: token.Token{Typ: token.IDENT, Lit: "Stock"},
+							Value: "Stock",
+						},
+					},
+				},
+				ResolvedStmts: []ast.ResolvedStmt{
+					&ast.PublishStmt{
+						Token: token.Token{Typ: token.PUBLISH, Lit: "publish"},
+						Value: &ast.Identifier{
+							Token: token.Token{Typ: token.IDENT, Lit: "Quantity"},
+							Value: "Quantity",
+						},
+					},
+				},
+			},
+			nil,
+		},
+		{
+			`title
+whereas the Amount in Stock (hereinafter Stock) is ninety-nine (99)
+whereas the Current Quantity (hereinafter Quantity) is Stock
+resolved publish Stock`,
+			&ast.Resolution{
+				WhereasStmts: []ast.WhereasStmt{
+					&ast.DeclStmt{
+						Token: token.Token{Typ: token.HEREINAFTER, Lit: "hereinafter"},
+						Name: &ast.Identifier{
+							Token: token.Token{Typ: token.IDENT, Lit: "Stock"},
+							Value: "Stock",
+						},
+						Value: &ast.IntegerLiteral{
+							Token: token.Token{Typ: token.INTEGER, Lit: "99"},
+							Value: 99,
+						},
+					},
+					&ast.DeclStmt{
+						Token: token.Token{Typ: token.HEREINAFTER, Lit: "hereinafter"},
+						Name: &ast.Identifier{
+							Token: token.Token{Typ: token.IDENT, Lit: "Quantity"},
+							Value: "Quantity",
+						},
+						Value: &ast.Identifier{
+							Token: token.Token{Typ: token.IDENT, Lit: "Stock"},
+							Value: "Stock",
+						},
+					},
+				},
+				ResolvedStmts: []ast.ResolvedStmt{
+					&ast.PublishStmt{
+						Token: token.Token{Typ: token.PUBLISH, Lit: "publish"},
+						Value: &ast.Identifier{
+							Token: token.Token{Typ: token.IDENT, Lit: "Stock"},
+							Value: "Stock",
+						},
+					},
+				},
+			},
+			unusedError{"Quantity"},
+		},
 	} {
 		p := New(lexer.New(test.input))
 		ast, err := p.ParseResolution()

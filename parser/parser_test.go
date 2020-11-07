@@ -429,12 +429,87 @@ func TestParseExpr(t *testing.T) {
 		{"Greeting", &ast.Identifier{token.Token{token.IDENT, "Greeting"}, "Greeting"}},
 		{"Quantity", &ast.Identifier{token.Token{token.IDENT, "Quantity"}, "Quantity"}},
 		{"Answer", &ast.Identifier{token.Token{token.IDENT, "Answer"}, "Answer"}},
+
+		// precedence tests
+		{
+			"ten (10) less thrice four (4)",
+			&ast.InfixExpr{
+				Token: token.Token{token.LESS, "less"},
+				Left:  &ast.IntegerLiteral{token.Token{token.INTEGER, "10"}, 10},
+				Right: &ast.UnaryPrefixExpr{
+					Token: token.Token{token.THRICE, "thrice"},
+					Right: &ast.IntegerLiteral{token.Token{token.INTEGER, "4"}, 4},
+				},
+			},
+		},
+		{
+			"thrice four (4) less ten (10)",
+			&ast.InfixExpr{
+				Token: token.Token{token.LESS, "less"},
+				Left: &ast.UnaryPrefixExpr{
+					Token: token.Token{token.THRICE, "thrice"},
+					Right: &ast.IntegerLiteral{token.Token{token.INTEGER, "4"}, 4},
+				},
+				Right: &ast.IntegerLiteral{token.Token{token.INTEGER, "10"}, 10},
+			},
+		},
+		{
+			"ten (10) less six (6) less one (1)",
+			&ast.InfixExpr{
+				Token: token.Token{token.LESS, "less"},
+				Left: &ast.InfixExpr{
+					Token: token.Token{token.LESS, "less"},
+					Left:  &ast.IntegerLiteral{token.Token{token.INTEGER, "10"}, 10},
+					Right: &ast.IntegerLiteral{token.Token{token.INTEGER, "6"}, 6},
+				},
+				Right: &ast.IntegerLiteral{token.Token{token.INTEGER, "1"}, 1},
+			},
+		},
 	} {
 		p := New(lexer.New(test.input))
 		expr := p.parseExpr(LOWEST)
 		err := p.lastError()
 		if !reflect.DeepEqual(expr, test.expr) || err != nil {
 			t.Errorf("parseExpr(%v): got %+v, %v; want %+v", test.input, expr, err, test.expr)
+		}
+	}
+}
+
+func TestParseUnaryPrefixExpr(t *testing.T) {
+	for _, test := range []struct {
+		input string
+		expr  ast.Expr
+	}{
+		{
+			"twice three (3)",
+			&ast.UnaryPrefixExpr{
+				Token: token.Token{token.TWICE, "twice"},
+				Right: &ast.IntegerLiteral{token.Token{token.INTEGER, "3"}, 3},
+			},
+		},
+		{
+			"thrice four (4)",
+			&ast.UnaryPrefixExpr{
+				Token: token.Token{token.THRICE, "thrice"},
+				Right: &ast.IntegerLiteral{token.Token{token.INTEGER, "4"}, 4},
+			},
+		},
+		{
+			"thrice twice negative one (-1)",
+			&ast.UnaryPrefixExpr{
+				Token: token.Token{token.THRICE, "thrice"},
+				Right: &ast.UnaryPrefixExpr{
+					Token: token.Token{token.TWICE, "twice"},
+					Right: &ast.IntegerLiteral{token.Token{token.INTEGER, "-1"}, -1},
+				},
+			},
+		},
+	} {
+		p := New(lexer.New(test.input))
+		expr := p.parseExpr(LOWEST)
+		err := p.lastError()
+		if !reflect.DeepEqual(expr, test.expr) || err != nil {
+			t.Errorf("ParseUnaryPrefixExpr(%v): got %#v, %v; want %#v", test.input, expr, err, test.expr)
 		}
 	}
 }

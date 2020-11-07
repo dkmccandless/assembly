@@ -86,3 +86,11 @@ type InfixExpr struct {
 
 func (e *InfixExpr) exprNode()      {}
 func (e *InfixExpr) String() string { return fmt.Sprintf("%v %v %v", e.Left, e.Token.Lit, e.Right) }
+
+type UnaryPrefixExpr struct {
+	Token token.Token // e.g. token.THRICE
+	Right Expr
+}
+
+func (e *UnaryPrefixExpr) exprNode()      {}
+func (e *UnaryPrefixExpr) String() string { return fmt.Sprintf("%v %v", e.Token.Lit, e.Right) }

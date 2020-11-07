@@ -98,7 +98,7 @@ func (p *Parser) precedence(t token.Token) precedence {
 		return PREFIX
 	}
 	switch t.Typ {
-	case token.IDENT, token.STRING, token.NUMERAL:
+	case token.IDENT, token.STRING, token.NUMERAL, token.TWICE, token.THRICE:
 		return PREFIX
 	case token.LESS:
 		return INFIX
@@ -305,10 +305,19 @@ func (p *Parser) parseNullDenotationExpr() ast.Expr {
 	case p.curIs(token.NUMERAL):
 		// Let parseIntegerLiteral record the syntax error
 		return p.parseIntegerLiteral()
+	case p.curIs(token.TWICE), p.curIs(token.THRICE):
+		return p.parseUnaryPrefixExpr()
 	default:
 		p.error(fmt.Errorf("unrecognized expression %v", p.cur.Lit))
 		return nil
 	}
+}
+
+func (p *Parser) parseUnaryPrefixExpr() ast.Expr {
+	expr := &ast.UnaryPrefixExpr{Token: p.cur}
+	p.next()
+	expr.Right = p.parseExpr(PREFIX)
+	return expr
 }
 
 // parseInfixExpr parses an infix expression: an expression in left denotation context

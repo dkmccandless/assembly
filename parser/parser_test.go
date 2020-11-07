@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"testing"
 
@@ -404,51 +405,36 @@ func TestParseStringLiteral(t *testing.T) {
 }
 
 func TestParseExpr(t *testing.T) {
-	for _, test := range integerTests {
-		input := fmt.Sprintf("%v (%v)", test.car, test.num)
-		p := New(lexer.New(input))
+	for _, test := range []struct {
+		input string
+		expr  ast.Expr
+	}{
+		{"zero (0)", &ast.IntegerLiteral{token.Token{token.INTEGER, "0"}, 0}},
+		{"one (1)", &ast.IntegerLiteral{token.Token{token.INTEGER, "1"}, 1}},
+		{"negative three trillion (-3,000,000,000,000)", &ast.IntegerLiteral{token.Token{token.INTEGER, "-3000000000000"}, -3000000000000}},
+		{
+			"negative nine quintillion two hundred twenty-three quadrillion three hundred seventy-two trillion thirty-six billion eight hundred fifty-four million seven hundred seventy-five thousand eight hundred eight (-9,223,372,036,854,775,808)",
+			&ast.IntegerLiteral{token.Token{token.INTEGER, "-9223372036854775808"}, math.MinInt64},
+		},
+		{
+			"nine quintillion two hundred twenty-three quadrillion three hundred seventy-two trillion thirty-six billion eight hundred fifty-four million seven hundred seventy-five thousand eight hundred seven (9,223,372,036,854,775,807)",
+			&ast.IntegerLiteral{token.Token{token.INTEGER, "9223372036854775807"}, math.MaxInt64},
+		},
+
+		{`""`, &ast.StringLiteral{token.Token{token.STRING, ""}, ""}},
+		{`"WHEREAS"`, &ast.StringLiteral{token.Token{token.STRING, "WHEREAS"}, "WHEREAS"}},
+		{`"zero (0)"`, &ast.StringLiteral{token.Token{token.STRING, "zero (0)"}, "zero (0)"}},
+		{`"Greetings, Assembly."`, &ast.StringLiteral{token.Token{token.STRING, "Greetings, Assembly."}, "Greetings, Assembly."}},
+
+		{"Greeting", &ast.Identifier{token.Token{token.IDENT, "Greeting"}, "Greeting"}},
+		{"Quantity", &ast.Identifier{token.Token{token.IDENT, "Quantity"}, "Quantity"}},
+		{"Answer", &ast.Identifier{token.Token{token.IDENT, "Answer"}, "Answer"}},
+	} {
+		p := New(lexer.New(test.input))
 		expr := p.parseExpr(LOWEST)
 		err := p.lastError()
-		if err != nil {
-			t.Errorf("parseExpr(%v): got error %v", input, err)
-		}
-		e, ok := expr.(*ast.IntegerLiteral)
-		if !ok {
-			t.Errorf("parseExpr(%v): got %T (%+v)", input, expr, expr)
-		}
-		if e.Value != test.n {
-			t.Errorf("parseExpr(%v): got %v", input, e.Value)
-		}
-	}
-	for _, test := range stringTests {
-		input := fmt.Sprintf("\"%v\"", test)
-		p := New(lexer.New(input))
-		expr := p.parseExpr(LOWEST)
-		err := p.lastError()
-		if err != nil {
-			t.Errorf("parseExpr(%v): got error %v", input, err)
-		}
-		e, ok := expr.(*ast.StringLiteral)
-		if !ok {
-			t.Errorf("parseExpr(%v): got %T (%+v)", input, expr, expr)
-		}
-		if e.Value != test {
-			t.Errorf("parseExpr(%v): got %v", input, e.Value)
-		}
-	}
-	for _, test := range identifierTests {
-		p := New(lexer.New(test))
-		expr := p.parseExpr(LOWEST)
-		err := p.lastError()
-		if err != nil {
-			t.Errorf("parseExpr(%v): got error %v", test, err)
-		}
-		e, ok := expr.(*ast.Identifier)
-		if !ok {
-			t.Errorf("parseExpr(%v): got %T (%+v)", test, expr, expr)
-		}
-		if e.Value != test {
-			t.Errorf("parseExpr(%v): got %v", test, e.Value)
+		if !reflect.DeepEqual(expr, test.expr) || err != nil {
+			t.Errorf("parseExpr(%v): got %+v, %v; want %+v", test.input, expr, err, test.expr)
 		}
 	}
 }

@@ -403,11 +403,11 @@ func TestParseStringLiteral(t *testing.T) {
 	}
 }
 
-func TestparseExpr(t *testing.T) {
+func TestParseExpr(t *testing.T) {
 	for _, test := range integerTests {
 		input := fmt.Sprintf("%v (%v)", test.car, test.num)
 		p := New(lexer.New(input))
-		expr := p.parseExpr()
+		expr := p.parseExpr(LOWEST)
 		err := p.lastError()
 		if err != nil {
 			t.Errorf("parseExpr(%v): got error %v", input, err)
@@ -423,7 +423,7 @@ func TestparseExpr(t *testing.T) {
 	for _, test := range stringTests {
 		input := fmt.Sprintf("\"%v\"", test)
 		p := New(lexer.New(input))
-		expr := p.parseExpr()
+		expr := p.parseExpr(LOWEST)
 		err := p.lastError()
 		if err != nil {
 			t.Errorf("parseExpr(%v): got error %v", input, err)
@@ -438,7 +438,7 @@ func TestparseExpr(t *testing.T) {
 	}
 	for _, test := range identifierTests {
 		p := New(lexer.New(test))
-		expr := p.parseExpr()
+		expr := p.parseExpr(LOWEST)
 		err := p.lastError()
 		if err != nil {
 			t.Errorf("parseExpr(%v): got error %v", test, err)
@@ -449,6 +449,29 @@ func TestparseExpr(t *testing.T) {
 		}
 		if e.Value != test {
 			t.Errorf("parseExpr(%v): got %v", test, e.Value)
+		}
+	}
+}
+
+func TestParseInfixExpr(t *testing.T) {
+	for _, test := range []struct {
+		input string
+		expr  ast.Expr
+	}{
+		{
+			"three (3) less two (2)",
+			&ast.InfixExpr{
+				Token: token.Token{token.LESS, "less"},
+				Left:  &ast.IntegerLiteral{token.Token{token.INTEGER, "3"}, 3},
+				Right: &ast.IntegerLiteral{token.Token{token.INTEGER, "2"}, 2},
+			},
+		},
+	} {
+		p := New(lexer.New(test.input))
+		expr := p.parseExpr(LOWEST)
+		err := p.lastError()
+		if !reflect.DeepEqual(expr, test.expr) || err != nil {
+			t.Errorf("ParseInfixExpr(%v): got %+v, %v; want %+v", test.input, expr, err, test.expr)
 		}
 	}
 }

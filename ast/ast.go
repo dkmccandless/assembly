@@ -1,6 +1,7 @@
 package ast
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/dkmccandless/assembly/token"
@@ -77,3 +78,11 @@ type StringLiteral struct {
 
 func (e *StringLiteral) exprNode()      {}
 func (e *StringLiteral) String() string { return e.Value }
+
+type InfixExpr struct {
+	Token       token.Token // e.g. token.LESS
+	Left, Right Expr
+}
+
+func (e *InfixExpr) exprNode()      {}
+func (e *InfixExpr) String() string { return fmt.Sprintf("%v %v %v", e.Left, e.Token.Lit, e.Right) }

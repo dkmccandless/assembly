@@ -31,6 +31,9 @@ const (
 	HUNDRED
 	POWER
 
+	// Operators
+	LESS
+
 	// Punctuation
 	LPAREN
 	RPAREN
@@ -80,6 +83,8 @@ var keywords = map[string]Type{
 	"trillion":    POWER,
 	"quadrillion": POWER,
 	"quintillion": POWER,
+
+	"less": LESS,
 
 	"whereas":     WHEREAS,
 	"resolved":    RESOLVED,

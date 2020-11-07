@@ -44,6 +44,14 @@ const (
 	used
 )
 
+type precedence int
+
+const (
+	LOWEST precedence = iota
+	INFIX
+	PREFIX
+)
+
 // Parser parses tokens from a Lexer into an abstract syntax tree.
 type Parser struct {
 	l      *lexer.Lexer
@@ -84,6 +92,23 @@ func (p *Parser) curIs(typ token.Type) bool { return p.cur.Typ == typ }
 
 // peekIs reports whether the Type of p.peek is typ.
 func (p *Parser) peekIs(typ token.Type) bool { return p.peek.Typ == typ }
+
+func (p *Parser) precedence(t token.Token) precedence {
+	if t.IsCardinal() {
+		return PREFIX
+	}
+	switch t.Typ {
+	case token.IDENT, token.STRING, token.NUMERAL:
+		return PREFIX
+	case token.LESS:
+		return INFIX
+	default:
+		return LOWEST
+	}
+}
+
+func (p *Parser) curPrec() precedence  { return p.precedence(p.cur) }
+func (p *Parser) peekPrec() precedence { return p.precedence(p.peek) }
 
 // error adds err to p's ErrorList.
 func (p *Parser) error(err error) { p.errors = append(p.errors, err) }
@@ -217,7 +242,7 @@ func (p *Parser) parseDeclStmt() *ast.DeclStmt {
 	if p.curIs(token.IDENT) {
 		p.markUsed(p.cur.Lit)
 	}
-	s.Value = p.parseExpr()
+	s.Value = p.parseExpr(LOWEST)
 	return s
 }
 
@@ -246,26 +271,57 @@ func (p *Parser) parsePublishStmt() *ast.PublishStmt {
 	if p.curIs(token.IDENT) {
 		p.markUsed(p.cur.Lit)
 	}
-	s.Value = p.parseExpr()
+	s.Value = p.parseExpr(LOWEST)
 	return s
 }
 
 // parseExpr parses an expression.
-func (p *Parser) parseExpr() ast.Expr {
+func (p *Parser) parseExpr(prec precedence) ast.Expr {
+	left := p.parseNullDenotationExpr()
+	if left == nil {
+		return nil
+	}
+	// Left-associative
+	for prec < p.peekPrec() {
+		if !p.peekIs(token.LESS) {
+			return left
+		}
+		p.next()
+		left = p.parseInfixExpr(left)
+	}
+	return left
+}
+
+// parseNullDenotationExpr parses an expression that begins with a null denotation token
+// (representing a literal or prefix operator).
+func (p *Parser) parseNullDenotationExpr() ast.Expr {
 	switch {
+	case p.curIs(token.IDENT):
+		return p.parseIdentifier()
+	case p.curIs(token.STRING):
+		return p.parseStringLiteral()
 	case p.cur.IsCardinal():
 		return p.parseIntegerLiteral()
 	case p.curIs(token.NUMERAL):
-		// Let parseIntegerLiteral the syntax error
+		// Let parseIntegerLiteral record the syntax error
 		return p.parseIntegerLiteral()
-	case p.curIs(token.STRING):
-		return p.parseStringLiteral()
-	case p.curIs(token.IDENT):
-		return p.parseIdentifier()
 	default:
-		p.error(errors.New("unrecognized expression"))
+		p.error(fmt.Errorf("unrecognized expression %v", p.cur.Lit))
 		return nil
 	}
+}
+
+// parseInfixExpr parses an infix expression: an expression in left denotation context
+// that expects a following expression.
+func (p *Parser) parseInfixExpr(left ast.Expr) ast.Expr {
+	expr := &ast.InfixExpr{
+		Token: p.cur,
+		Left:  left,
+	}
+	prec := p.curPrec()
+	p.next()
+	expr.Right = p.parseExpr(prec)
+	return expr
 }
 
 func (p *Parser) parseIdentifier() *ast.Identifier {

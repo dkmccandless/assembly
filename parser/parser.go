@@ -217,7 +217,7 @@ func (p *Parser) parseDeclStmt() *ast.DeclStmt {
 	if p.curIs(token.IDENT) {
 		p.markUsed(p.cur.Lit)
 	}
-	s.Value = p.ParseExpr()
+	s.Value = p.parseExpr()
 	return s
 }
 
@@ -246,12 +246,12 @@ func (p *Parser) parsePublishStmt() *ast.PublishStmt {
 	if p.curIs(token.IDENT) {
 		p.markUsed(p.cur.Lit)
 	}
-	s.Value = p.ParseExpr()
+	s.Value = p.parseExpr()
 	return s
 }
 
-// ParseExpr parses an expression.
-func (p *Parser) ParseExpr() ast.Expr {
+// parseExpr parses an expression.
+func (p *Parser) parseExpr() ast.Expr {
 	switch {
 	case p.cur.IsCardinal():
 		return p.parseIntegerLiteral()

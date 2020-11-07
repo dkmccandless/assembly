@@ -403,52 +403,52 @@ func TestParseStringLiteral(t *testing.T) {
 	}
 }
 
-func TestParseExpr(t *testing.T) {
+func TestparseExpr(t *testing.T) {
 	for _, test := range integerTests {
 		input := fmt.Sprintf("%v (%v)", test.car, test.num)
 		p := New(lexer.New(input))
-		expr := p.ParseExpr()
+		expr := p.parseExpr()
 		err := p.lastError()
 		if err != nil {
-			t.Errorf("ParseExpr(%v): got error %v", input, err)
+			t.Errorf("parseExpr(%v): got error %v", input, err)
 		}
 		e, ok := expr.(*ast.IntegerLiteral)
 		if !ok {
-			t.Errorf("ParseExpr(%v): got %T (%+v)", input, expr, expr)
+			t.Errorf("parseExpr(%v): got %T (%+v)", input, expr, expr)
 		}
 		if e.Value != test.n {
-			t.Errorf("ParseExpr(%v): got %v", input, e.Value)
+			t.Errorf("parseExpr(%v): got %v", input, e.Value)
 		}
 	}
 	for _, test := range stringTests {
 		input := fmt.Sprintf("\"%v\"", test)
 		p := New(lexer.New(input))
-		expr := p.ParseExpr()
+		expr := p.parseExpr()
 		err := p.lastError()
 		if err != nil {
-			t.Errorf("ParseExpr(%v): got error %v", input, err)
+			t.Errorf("parseExpr(%v): got error %v", input, err)
 		}
 		e, ok := expr.(*ast.StringLiteral)
 		if !ok {
-			t.Errorf("ParseExpr(%v): got %T (%+v)", input, expr, expr)
+			t.Errorf("parseExpr(%v): got %T (%+v)", input, expr, expr)
 		}
 		if e.Value != test {
-			t.Errorf("ParseExpr(%v): got %v", input, e.Value)
+			t.Errorf("parseExpr(%v): got %v", input, e.Value)
 		}
 	}
 	for _, test := range identifierTests {
 		p := New(lexer.New(test))
-		expr := p.ParseExpr()
+		expr := p.parseExpr()
 		err := p.lastError()
 		if err != nil {
-			t.Errorf("ParseExpr(%v): got error %v", test, err)
+			t.Errorf("parseExpr(%v): got error %v", test, err)
 		}
 		e, ok := expr.(*ast.Identifier)
 		if !ok {
-			t.Errorf("ParseExpr(%v): got %T (%+v)", test, expr, expr)
+			t.Errorf("parseExpr(%v): got %T (%+v)", test, expr, expr)
 		}
 		if e.Value != test {
-			t.Errorf("ParseExpr(%v): got %v", test, e.Value)
+			t.Errorf("parseExpr(%v): got %v", test, e.Value)
 		}
 	}
 }

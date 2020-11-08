@@ -465,6 +465,68 @@ func TestParseExpr(t *testing.T) {
 				Right: &ast.IntegerLiteral{token.Token{token.INTEGER, "1"}, 1},
 			},
 		},
+		{
+			"sum product Ax Bx product Ay By",
+			&ast.BinaryPrefixExpr{
+				Token: token.Token{token.SUM, "sum"},
+				First: &ast.BinaryPrefixExpr{
+					Token:  token.Token{token.PRODUCT, "product"},
+					First:  &ast.Identifier{token.Token{token.IDENT, "Ax"}, "Ax"},
+					Second: &ast.Identifier{token.Token{token.IDENT, "Bx"}, "Bx"},
+				},
+				Second: &ast.BinaryPrefixExpr{
+					Token:  token.Token{token.PRODUCT, "product"},
+					First:  &ast.Identifier{token.Token{token.IDENT, "Ay"}, "Ay"},
+					Second: &ast.Identifier{token.Token{token.IDENT, "By"}, "By"},
+				},
+			},
+		},
+		{
+			"product three (3) four (4) less two (2)",
+			&ast.InfixExpr{
+				Token: token.Token{token.LESS, "less"},
+				Left: &ast.BinaryPrefixExpr{
+					Token:  token.Token{token.PRODUCT, "product"},
+					First:  &ast.IntegerLiteral{token.Token{token.INTEGER, "3"}, 3},
+					Second: &ast.IntegerLiteral{token.Token{token.INTEGER, "4"}, 4},
+				},
+				Right: &ast.IntegerLiteral{token.Token{token.INTEGER, "2"}, 2},
+			},
+		},
+		{
+			"product three (3) less two (2) four (4)",
+			&ast.BinaryPrefixExpr{
+				Token: token.Token{token.PRODUCT, "product"},
+				First: &ast.InfixExpr{
+					Token: token.Token{token.LESS, "less"},
+					Left:  &ast.IntegerLiteral{token.Token{token.INTEGER, "3"}, 3},
+					Right: &ast.IntegerLiteral{token.Token{token.INTEGER, "2"}, 2},
+				},
+				Second: &ast.IntegerLiteral{token.Token{token.INTEGER, "4"}, 4},
+			},
+		},
+		{
+			"remainder twice eight (8) five (5)",
+			&ast.BinaryPrefixExpr{
+				Token: token.Token{token.REMAINDER, "remainder"},
+				First: &ast.UnaryPrefixExpr{
+					Token: token.Token{token.TWICE, "twice"},
+					Right: &ast.IntegerLiteral{token.Token{token.INTEGER, "8"}, 8},
+				},
+				Second: &ast.IntegerLiteral{token.Token{token.INTEGER, "5"}, 5},
+			},
+		},
+		{
+			"twice remainder eight (8) five (5)",
+			&ast.UnaryPrefixExpr{
+				Token: token.Token{token.TWICE, "twice"},
+				Right: &ast.BinaryPrefixExpr{
+					Token:  token.Token{token.REMAINDER, "remainder"},
+					First:  &ast.IntegerLiteral{token.Token{token.INTEGER, "8"}, 8},
+					Second: &ast.IntegerLiteral{token.Token{token.INTEGER, "5"}, 5},
+				},
+			},
+		},
 	} {
 		p := New(lexer.New(test.input))
 		expr := p.parseExpr(LOWEST)
@@ -510,6 +572,53 @@ func TestParseUnaryPrefixExpr(t *testing.T) {
 		err := p.lastError()
 		if !reflect.DeepEqual(expr, test.expr) || err != nil {
 			t.Errorf("ParseUnaryPrefixExpr(%v): got %#v, %v; want %#v", test.input, expr, err, test.expr)
+		}
+	}
+}
+
+func TestParseBinaryPrefixExpr(t *testing.T) {
+	for _, test := range []struct {
+		input string
+		expr  ast.Expr
+	}{
+		{
+			"sum one (1) one (1)",
+			&ast.BinaryPrefixExpr{
+				Token:  token.Token{token.SUM, "sum"},
+				First:  &ast.IntegerLiteral{token.Token{token.INTEGER, "1"}, 1},
+				Second: &ast.IntegerLiteral{token.Token{token.INTEGER, "1"}, 1},
+			},
+		},
+		{
+			"product two (2) three (3)",
+			&ast.BinaryPrefixExpr{
+				Token:  token.Token{token.PRODUCT, "product"},
+				First:  &ast.IntegerLiteral{token.Token{token.INTEGER, "2"}, 2},
+				Second: &ast.IntegerLiteral{token.Token{token.INTEGER, "3"}, 3},
+			},
+		},
+		{
+			"quotient twelve (12) five (5)",
+			&ast.BinaryPrefixExpr{
+				Token:  token.Token{token.QUOTIENT, "quotient"},
+				First:  &ast.IntegerLiteral{token.Token{token.INTEGER, "12"}, 12},
+				Second: &ast.IntegerLiteral{token.Token{token.INTEGER, "5"}, 5},
+			},
+		},
+		{
+			"remainder twelve (12) five (5)",
+			&ast.BinaryPrefixExpr{
+				Token:  token.Token{token.REMAINDER, "remainder"},
+				First:  &ast.IntegerLiteral{token.Token{token.INTEGER, "12"}, 12},
+				Second: &ast.IntegerLiteral{token.Token{token.INTEGER, "5"}, 5},
+			},
+		},
+	} {
+		p := New(lexer.New(test.input))
+		expr := p.parseExpr(LOWEST)
+		err := p.lastError()
+		if !reflect.DeepEqual(expr, test.expr) || err != nil {
+			t.Errorf("ParseBinaryPrefixExpr(%v): got %#v, %v; want %#v", test.input, expr, err, test.expr)
 		}
 	}
 }

@@ -34,6 +34,10 @@ const (
 	// Operators
 	TWICE
 	THRICE
+	SUM
+	PRODUCT
+	QUOTIENT
+	REMAINDER
 	LESS
 
 	// Punctuation
@@ -86,9 +90,13 @@ var keywords = map[string]Type{
 	"quadrillion": POWER,
 	"quintillion": POWER,
 
-	"twice":  TWICE,
-	"thrice": THRICE,
-	"less":   LESS,
+	"twice":     TWICE,
+	"thrice":    THRICE,
+	"sum":       SUM,
+	"product":   PRODUCT,
+	"quotient":  QUOTIENT,
+	"remainder": REMAINDER,
+	"less":      LESS,
 
 	"whereas":     WHEREAS,
 	"resolved":    RESOLVED,

@@ -94,3 +94,13 @@ type UnaryPrefixExpr struct {
 
 func (e *UnaryPrefixExpr) exprNode()      {}
 func (e *UnaryPrefixExpr) String() string { return fmt.Sprintf("%v %v", e.Token.Lit, e.Right) }
+
+type BinaryPrefixExpr struct {
+	Token         token.Token // e.g. token.SUM
+	First, Second Expr
+}
+
+func (e *BinaryPrefixExpr) exprNode() {}
+func (e *BinaryPrefixExpr) String() string {
+	return fmt.Sprintf("%v %v %v", e.Token.Lit, e.First, e.Second)
+}

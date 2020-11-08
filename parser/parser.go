@@ -295,18 +295,21 @@ func (p *Parser) parseExpr(prec precedence) ast.Expr {
 // parseNullDenotationExpr parses an expression that begins with a null denotation token
 // (representing a literal or prefix operator).
 func (p *Parser) parseNullDenotationExpr() ast.Expr {
-	switch {
-	case p.curIs(token.IDENT):
-		return p.parseIdentifier()
-	case p.curIs(token.STRING):
-		return p.parseStringLiteral()
-	case p.cur.IsCardinal():
+	if p.cur.IsCardinal() {
 		return p.parseIntegerLiteral()
-	case p.curIs(token.NUMERAL):
+	}
+	switch p.cur.Typ {
+	case token.IDENT:
+		return p.parseIdentifier()
+	case token.STRING:
+		return p.parseStringLiteral()
+	case token.NUMERAL:
 		// Let parseIntegerLiteral record the syntax error
 		return p.parseIntegerLiteral()
-	case p.curIs(token.TWICE), p.curIs(token.THRICE):
+	case token.TWICE, token.THRICE:
 		return p.parseUnaryPrefixExpr()
+	case token.SUM, token.PRODUCT, token.QUOTIENT, token.REMAINDER:
+		return p.parseBinaryPrefixExpr()
 	default:
 		p.error(fmt.Errorf("unrecognized expression %v", p.cur.Lit))
 		return nil
@@ -317,6 +320,15 @@ func (p *Parser) parseUnaryPrefixExpr() ast.Expr {
 	expr := &ast.UnaryPrefixExpr{Token: p.cur}
 	p.next()
 	expr.Right = p.parseExpr(PREFIX)
+	return expr
+}
+
+func (p *Parser) parseBinaryPrefixExpr() ast.Expr {
+	expr := &ast.BinaryPrefixExpr{Token: p.cur}
+	p.next()
+	expr.First = p.parseExpr(LOWEST)
+	p.next()
+	expr.Second = p.parseExpr(PREFIX)
 	return expr
 }
 

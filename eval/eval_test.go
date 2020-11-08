@@ -102,39 +102,64 @@ func TestEvalIdentifier(t *testing.T) {
 }
 
 func TestEvalDeclStmt(t *testing.T) {
-	for _, ast := range []*ast.DeclStmt{
-		&ast.DeclStmt{
-			Token: token.Token{Typ: token.HEREINAFTER, Lit: "hereinafter"},
-			Name: &ast.Identifier{
-				Token: token.Token{Typ: token.IDENT, Lit: "Greeting"},
-				Value: "Greeting",
+	for _, test := range []struct {
+		stmt *ast.DeclStmt
+		obj  object.Object
+	}{
+		{
+			&ast.DeclStmt{
+				Token: token.Token{Typ: token.HEREINAFTER, Lit: "hereinafter"},
+				Name: &ast.Identifier{
+					Token: token.Token{Typ: token.IDENT, Lit: "Greeting"},
+					Value: "Greeting",
+				},
+				Value: &ast.StringLiteral{
+					Token: token.Token{Typ: token.STRING, Lit: "Hello, World!"},
+					Value: "Hello, World!",
+				},
 			},
-			Value: &ast.StringLiteral{
-				Token: token.Token{Typ: token.STRING, Lit: "Hello, World!"},
-				Value: "Hello, World!",
-			},
+			&object.String{"Hello, World!"},
 		},
-		&ast.DeclStmt{
-			Token: token.Token{Typ: token.HEREINAFTER, Lit: "hereinafter"},
-			Name: &ast.Identifier{
-				Token: token.Token{Typ: token.IDENT, Lit: "Answer"},
-				Value: "Answer",
+		{
+			&ast.DeclStmt{
+				Token: token.Token{Typ: token.HEREINAFTER, Lit: "hereinafter"},
+				Name: &ast.Identifier{
+					Token: token.Token{Typ: token.IDENT, Lit: "Answer"},
+					Value: "Answer",
+				},
+				Value: &ast.IntegerLiteral{
+					Token: token.Token{Typ: token.INTEGER, Lit: "42"},
+					Value: 42,
+				},
 			},
-			Value: &ast.IntegerLiteral{
-				Token: token.Token{Typ: token.INTEGER, Lit: "42"},
-				Value: 42,
+			&object.Integer{42},
+		},
+		{
+			&ast.DeclStmt{
+				Token: token.Token{Typ: token.HEREINAFTER, Lit: "hereinafter"},
+				Name: &ast.Identifier{
+					Token: token.Token{Typ: token.IDENT, Lit: "Dozen"},
+					Value: "Dozen",
+				},
+				Value: &ast.BinaryPrefixExpr{
+					Token:  token.Token{Typ: token.SUM, Lit: "sum"},
+					First:  &ast.IntegerLiteral{token.Token{token.INTEGER, "10"}, 10},
+					Second: &ast.IntegerLiteral{token.Token{token.INTEGER, "2"}, 2},
+				},
 			},
+			&object.Integer{12},
 		},
 	} {
 		env := object.NewEnvironment()
-		if obj := Eval(ast.Name, env); obj != nil {
-			t.Errorf("EvalDeclStmt(Identifier %+v): got %T (%+v) before declaration", ast.Name, obj, obj)
+		id := test.stmt.Name
+		if obj := Eval(id, env); obj != nil {
+			t.Errorf("EvalDeclStmt(Identifier %+v): got %T (%+v) before declaration", id, obj, obj)
 		}
-		if obj := Eval(ast, env); obj != nil {
-			t.Errorf("EvalDeclStmt(%+v): got %T (%+v) from declaration", ast, obj, obj)
+		if obj := Eval(test.stmt, env); obj != nil {
+			t.Errorf("EvalDeclStmt(%+v): got %T (%+v) from declaration", test.stmt, obj, obj)
 		}
-		if obj := Eval(ast.Name, env); obj == nil {
-			t.Errorf("EvalDeclStmt(Identifier %+v): got %T (%+v) after declaration", ast.Name, obj, obj)
+		if obj := Eval(id, env); !reflect.DeepEqual(obj, test.obj) {
+			t.Errorf("EvalDeclStmt(Identifier %+v): got %T (%+v) after declaration", id, obj, obj)
 		}
 	}
 }

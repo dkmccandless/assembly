@@ -51,6 +51,7 @@ const (
 	WHEREAS
 	RESOLVED
 	HEREINAFTER
+	ASSUME
 	PUBLISH
 )
 
@@ -105,6 +106,7 @@ var keywords = map[string]Type{
 	"whereas":     WHEREAS,
 	"resolved":    RESOLVED,
 	"hereinafter": HEREINAFTER,
+	"assume":      ASSUME,
 	"publish":     PUBLISH,
 }
 

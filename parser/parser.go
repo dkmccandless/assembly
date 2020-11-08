@@ -250,19 +250,41 @@ func (p *Parser) parseDeclStmt() *ast.DeclStmt {
 }
 
 func (p *Parser) parseResolvedStmt() ast.ResolvedStmt {
-	for !p.peekIs(token.PUBLISH) {
-		if p.peekIs(token.WHEREAS) || p.peekIs(token.RESOLVED) || p.peekIs(token.EOF) {
-			return nil
+	for ; !p.peekIs(token.WHEREAS) && !p.peekIs(token.RESOLVED) && !p.peekIs(token.EOF); p.next() {
+		if !p.curIs(token.IDENT) && !p.curIs(token.PUBLISH) {
+			continue
 		}
-		p.next()
+		switch p.cur.Typ {
+		case token.IDENT:
+			// Assignment if identifier is followed by token.ASSUME
+			if !p.peekIs(token.ASSUME) {
+				continue
+			}
+			id := p.parseIdentifier()
+			if p.idents[id.Value] == undeclared {
+				p.error(undeclaredError{id.Value})
+				return nil
+			}
+			p.next()
+			return p.parseAssumeStmt(id)
+		case token.PUBLISH:
+			return p.parsePublishStmt()
+		}
+	}
+	return nil
+}
+
+func (p *Parser) parseAssumeStmt(ident *ast.Identifier) *ast.AssumeStmt {
+	s := &ast.AssumeStmt{
+		Token: p.cur,
+		Name:  ident,
 	}
 	p.next()
-	switch p.cur.Typ {
-	case token.PUBLISH:
-		return p.parsePublishStmt()
-	default:
-		return nil
+	for !isExprToken(p.cur) {
+		p.next()
 	}
+	s.Value = p.parseExpr(LOWEST)
+	return s
 }
 
 func (p *Parser) parsePublishStmt() *ast.PublishStmt {

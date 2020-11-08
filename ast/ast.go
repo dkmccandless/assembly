@@ -41,6 +41,15 @@ type ResolvedStmt interface {
 	resStmtNode()
 }
 
+type AssumeStmt struct {
+	Token token.Token // token.ASSUME
+	Name  *Identifier
+	Value Expr
+}
+
+func (s *AssumeStmt) resStmtNode()   {}
+func (s *AssumeStmt) String() string { return s.Token.Lit }
+
 type PublishStmt struct {
 	Token token.Token // token.PUBLISH
 	Value Expr

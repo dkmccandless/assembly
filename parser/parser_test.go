@@ -318,6 +318,72 @@ func TestParseDeclStmt(t *testing.T) {
 	}
 }
 
+func TestParseAssumeStmt(t *testing.T) {
+	for _, test := range []struct {
+		input string
+		want  *ast.AssumeStmt
+	}{
+		{
+			`Greeting assume "Greetings, Assembly."`,
+			&ast.AssumeStmt{
+				Token: token.Token{Typ: token.ASSUME, Lit: "assume"},
+				Name: &ast.Identifier{
+					Token: token.Token{Typ: token.IDENT, Lit: "Greeting"},
+					Value: "Greeting",
+				},
+				Value: &ast.StringLiteral{
+					Token: token.Token{Typ: token.STRING, Lit: "Greetings, Assembly."},
+					Value: "Greetings, Assembly.",
+				},
+			},
+		},
+		{
+			"Total assume three (3)",
+			&ast.AssumeStmt{
+				Token: token.Token{Typ: token.ASSUME, Lit: "assume"},
+				Name: &ast.Identifier{
+					Token: token.Token{Typ: token.IDENT, Lit: "Total"},
+					Value: "Total",
+				},
+				Value: &ast.IntegerLiteral{
+					Token: token.Token{Typ: token.INTEGER, Lit: "3"},
+					Value: 3,
+				},
+			},
+		},
+		{
+			"Total assume sum Total one (1)",
+			&ast.AssumeStmt{
+				Token: token.Token{Typ: token.ASSUME, Lit: "assume"},
+				Name: &ast.Identifier{
+					Token: token.Token{Typ: token.IDENT, Lit: "Total"},
+					Value: "Total",
+				},
+				Value: &ast.BinaryPrefixExpr{
+					Token: token.Token{Typ: token.SUM, Lit: "sum"},
+					First: &ast.Identifier{
+						Token: token.Token{Typ: token.IDENT, Lit: "Total"},
+						Value: "Total",
+					},
+					Second: &ast.IntegerLiteral{
+						Token: token.Token{Typ: token.INTEGER, Lit: "1"},
+						Value: 1,
+					},
+				},
+			},
+		},
+	} {
+		p := New(lexer.New(test.input))
+		p.idents["Greeting"] = declared
+		p.idents["Total"] = declared
+		got := p.parseResolvedStmt()
+		err := p.lastError()
+		if err != nil || !reflect.DeepEqual(got, test.want) {
+			t.Errorf("parseAssumeStmt(%v): got %#v, %v, want %#v", test.input, got, err, test.want)
+		}
+	}
+}
+
 func TestParsePublishStmt(t *testing.T) {
 	for _, test := range []struct {
 		input string

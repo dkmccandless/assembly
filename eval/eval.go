@@ -56,6 +56,10 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		if val := Eval(node.Value, env); val != nil {
 			env.Set(node.Name.Value, val)
 		}
+	case *ast.AssumeStmt:
+		if val := Eval(node.Value, env); val != nil {
+			env.Set(node.Name.Value, val)
+		}
 	case *ast.PublishStmt:
 		if val := Eval(node.Value, env); val != nil {
 			fmt.Println(val.Inspect())

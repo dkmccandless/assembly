@@ -164,6 +164,73 @@ func TestEvalDeclStmt(t *testing.T) {
 	}
 }
 
+func TestAssumeStmt(t *testing.T) {
+	for _, test := range []struct {
+		stmt *ast.AssumeStmt
+		obj  object.Object
+	}{
+		{
+			&ast.AssumeStmt{
+				Token: token.Token{Typ: token.ASSUME, Lit: "assume"},
+				Name: &ast.Identifier{
+					Token: token.Token{Typ: token.IDENT, Lit: "Greeting"},
+					Value: "Greeting",
+				},
+				Value: &ast.StringLiteral{
+					Token: token.Token{Typ: token.STRING, Lit: "Greetings, Assembly."},
+					Value: "Greetings, Assembly.",
+				},
+			},
+			&object.String{"Greetings, Assembly."},
+		},
+		{
+			&ast.AssumeStmt{
+				Token: token.Token{Typ: token.ASSUME, Lit: "assume"},
+				Name: &ast.Identifier{
+					Token: token.Token{Typ: token.IDENT, Lit: "Total"},
+					Value: "Total",
+				},
+				Value: &ast.IntegerLiteral{
+					Token: token.Token{Typ: token.INTEGER, Lit: "3"},
+					Value: 3,
+				},
+			},
+			&object.Integer{3},
+		},
+		{
+			&ast.AssumeStmt{
+				Token: token.Token{Typ: token.ASSUME, Lit: "assume"},
+				Name: &ast.Identifier{
+					Token: token.Token{Typ: token.IDENT, Lit: "Total"},
+					Value: "Total",
+				},
+				Value: &ast.BinaryPrefixExpr{
+					Token: token.Token{Typ: token.SUM, Lit: "sum"},
+					First: &ast.Identifier{
+						Token: token.Token{Typ: token.IDENT, Lit: "Total"},
+						Value: "Total",
+					},
+					Second: &ast.IntegerLiteral{
+						Token: token.Token{Typ: token.INTEGER, Lit: "1"},
+						Value: 1,
+					},
+				},
+			},
+			&object.Integer{11},
+		},
+	} {
+		env := object.NewEnvironment()
+		env.Set("Greeting", &object.String{"Hello, World!"})
+		env.Set("Total", &object.Integer{10})
+		id := test.stmt.Name.Value
+		err := Eval(test.stmt, env)
+		obj, ok := env.Get(id)
+		if err != nil || !reflect.DeepEqual(obj, test.obj) || !ok {
+			t.Errorf("EvalAssumeStmt(%v): got %T (%+v), want %T (%+v)", id, obj, obj, test.obj, test.obj)
+		}
+	}
+}
+
 func TestEvalUnaryPrefixExpr(t *testing.T) {
 	for _, test := range []struct {
 		ast ast.Expr

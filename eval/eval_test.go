@@ -138,3 +138,139 @@ func TestEvalDeclStmt(t *testing.T) {
 		}
 	}
 }
+
+func TestEvalUnaryPrefixExpr(t *testing.T) {
+	for _, test := range []struct {
+		ast ast.Expr
+		obj object.Object
+	}{
+		{
+			&ast.UnaryPrefixExpr{
+				Token: token.Token{token.TWICE, "twice"},
+				Right: &ast.IntegerLiteral{token.Token{token.INTEGER, "3"}, 3},
+			},
+			&object.Integer{6},
+		},
+		{
+			&ast.UnaryPrefixExpr{
+				Token: token.Token{token.THRICE, "thrice"},
+				Right: &ast.IntegerLiteral{token.Token{token.INTEGER, "4"}, 4},
+			},
+			&object.Integer{12},
+		},
+		{
+			&ast.UnaryPrefixExpr{
+				Token: token.Token{token.THRICE, "thrice"},
+				Right: &ast.UnaryPrefixExpr{
+					Token: token.Token{token.TWICE, "twice"},
+					Right: &ast.IntegerLiteral{token.Token{token.INTEGER, "-1"}, -1},
+				},
+			},
+			&object.Integer{-6},
+		},
+	} {
+		if obj := Eval(test.ast, object.NewEnvironment()); !reflect.DeepEqual(obj, test.obj) {
+			t.Errorf("EvalUnaryPrefixExpr(%+v): got %+v, want %+v", test.ast, obj, test.obj)
+		}
+	}
+}
+
+func TestEvalBinaryPrefixExpr(t *testing.T) {
+	for _, test := range []struct {
+		ast ast.Expr
+		obj object.Object
+	}{
+		{
+			&ast.BinaryPrefixExpr{
+				Token:  token.Token{token.SUM, "sum"},
+				First:  &ast.IntegerLiteral{token.Token{token.INTEGER, "1"}, 1},
+				Second: &ast.IntegerLiteral{token.Token{token.INTEGER, "1"}, 1},
+			},
+			&object.Integer{2},
+		},
+		{
+			&ast.BinaryPrefixExpr{
+				Token:  token.Token{token.PRODUCT, "product"},
+				First:  &ast.IntegerLiteral{token.Token{token.INTEGER, "2"}, 2},
+				Second: &ast.IntegerLiteral{token.Token{token.INTEGER, "3"}, 3},
+			},
+			&object.Integer{6},
+		},
+		{
+			&ast.BinaryPrefixExpr{
+				Token:  token.Token{token.QUOTIENT, "quotient"},
+				First:  &ast.IntegerLiteral{token.Token{token.INTEGER, "17"}, 17},
+				Second: &ast.IntegerLiteral{token.Token{token.INTEGER, "5"}, 5},
+			},
+			&object.Integer{3},
+		},
+		{
+			&ast.BinaryPrefixExpr{
+				Token:  token.Token{token.REMAINDER, "remainder"},
+				First:  &ast.IntegerLiteral{token.Token{token.INTEGER, "17"}, 17},
+				Second: &ast.IntegerLiteral{token.Token{token.INTEGER, "5"}, 5},
+			},
+			&object.Integer{2},
+		},
+	} {
+		if obj := Eval(test.ast, object.NewEnvironment()); !reflect.DeepEqual(obj, test.obj) {
+			t.Errorf("EvalBinaryPrefixExpr(%+v): got %+v, want %+v", test.ast, obj, test.obj)
+		}
+	}
+}
+
+func TestEvalInfixExpr(t *testing.T) {
+	for _, test := range []struct {
+		ast ast.Expr
+		obj object.Object
+	}{
+		{
+			&ast.InfixExpr{
+				Token: token.Token{token.LESS, "less"},
+				Left:  &ast.IntegerLiteral{token.Token{token.INTEGER, "3"}, 3},
+				Right: &ast.IntegerLiteral{token.Token{token.INTEGER, "2"}, 2},
+			},
+			&object.Integer{1},
+		},
+	} {
+		if obj := Eval(test.ast, object.NewEnvironment()); !reflect.DeepEqual(obj, test.obj) {
+			t.Errorf("EvalInfixExpr(%+v): got %+v, want %+v", test.ast, obj, test.obj)
+		}
+	}
+}
+
+func TestEvalPostfixExpr(t *testing.T) {
+	for _, test := range []struct {
+		ast ast.Expr
+		obj object.Object
+	}{
+		{
+			&ast.PostfixExpr{
+				Token: token.Token{token.SQUARED, "squared"},
+				Left:  &ast.IntegerLiteral{token.Token{token.INTEGER, "3"}, 3},
+			},
+			&object.Integer{9},
+		},
+		{
+			&ast.PostfixExpr{
+				Token: token.Token{token.CUBED, "cubed"},
+				Left:  &ast.IntegerLiteral{token.Token{token.INTEGER, "4"}, 4},
+			},
+			&object.Integer{64},
+		},
+		{
+			&ast.PostfixExpr{
+				Token: token.Token{token.SQUARED, "squared"},
+				Left: &ast.PostfixExpr{
+					Token: token.Token{token.CUBED, "cubed"},
+					Left:  &ast.IntegerLiteral{token.Token{token.INTEGER, "10"}, 10},
+				},
+			},
+			&object.Integer{1e6},
+		},
+	} {
+		if obj := Eval(test.ast, object.NewEnvironment()); !reflect.DeepEqual(obj, test.obj) {
+			t.Errorf("EvalPostfixExpr(%+v): got %+v, want %+v", test.ast, obj, test.obj)
+		}
+	}
+}

@@ -271,9 +271,6 @@ func (p *Parser) parsePublishStmt() *ast.PublishStmt {
 	for !isExprToken(p.cur) {
 		p.next()
 	}
-	if p.curIs(token.IDENT) {
-		p.markUsed(p.cur.Lit)
-	}
 	s.Value = p.parseExpr(LOWEST)
 	return s
 }
@@ -308,6 +305,7 @@ func (p *Parser) parseNullDenotationExpr() ast.Expr {
 	}
 	switch p.cur.Typ {
 	case token.IDENT:
+		p.markUsed(p.cur.Lit)
 		return p.parseIdentifier()
 	case token.STRING:
 		return p.parseStringLiteral()

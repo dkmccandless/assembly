@@ -34,5 +34,7 @@ Usage:	assembly [resolution name]
 		fmt.Println(err)
 		return
 	}
-	eval.Eval(ast, object.NewEnvironment())
+	if obj := eval.Eval(ast, object.NewEnvironment()); err != nil {
+		fmt.Println(obj.Inspect())
+	}
 }

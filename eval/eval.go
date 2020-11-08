@@ -29,10 +29,14 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 	case *ast.Resolution:
 		for _, wh := range node.WhereasStmts {
-			Eval(wh, env)
+			if err := Eval(wh, env); err != nil {
+				return err
+			}
 		}
 		for _, res := range node.ResolvedStmts {
-			Eval(res, env)
+			if err := Eval(res, env); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

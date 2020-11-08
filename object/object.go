@@ -12,6 +12,7 @@ type Type int
 const (
 	INTEGER Type = iota
 	STRING
+	ERROR
 )
 
 type Integer struct{ Value int64 }
@@ -89,3 +90,8 @@ type String struct{ Value string }
 
 func (s *String) Type() Type      { return STRING }
 func (s *String) Inspect() string { return s.Value }
+
+type Error struct{ Value string }
+
+func (e *Error) Type() Type      { return ERROR }
+func (e *Error) Inspect() string { return e.Value }

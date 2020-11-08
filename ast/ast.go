@@ -104,3 +104,11 @@ func (e *BinaryPrefixExpr) exprNode() {}
 func (e *BinaryPrefixExpr) String() string {
 	return fmt.Sprintf("%v %v %v", e.Token.Lit, e.First, e.Second)
 }
+
+type PostfixExpr struct {
+	Token token.Token // e.g. token.SQUARED
+	Left  Expr
+}
+
+func (e *PostfixExpr) exprNode()      {}
+func (e *PostfixExpr) String() string { return fmt.Sprintf("%v %v", e.Left, e.Token.Lit) }

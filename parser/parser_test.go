@@ -527,12 +527,97 @@ func TestParseExpr(t *testing.T) {
 				},
 			},
 		},
+		{
+			"twice three (3) squared",
+			&ast.UnaryPrefixExpr{
+				Token: token.Token{token.TWICE, "twice"},
+				Right: &ast.PostfixExpr{
+					Token: token.Token{token.SQUARED, "squared"},
+					Left:  &ast.IntegerLiteral{token.Token{token.INTEGER, "3"}, 3},
+				},
+			},
+		},
+		{
+			"product two (2) ten (10) cubed",
+			&ast.BinaryPrefixExpr{
+				Token: token.Token{token.PRODUCT, "product"},
+				First: &ast.IntegerLiteral{token.Token{token.INTEGER, "2"}, 2},
+				Second: &ast.PostfixExpr{
+					Token: token.Token{token.CUBED, "cubed"},
+					Left:  &ast.IntegerLiteral{token.Token{token.INTEGER, "10"}, 10},
+				},
+			},
+		},
+		{
+			"quotient seven (7) squared twelve (12)",
+			&ast.BinaryPrefixExpr{
+				Token: token.Token{token.QUOTIENT, "quotient"},
+				First: &ast.PostfixExpr{
+					Token: token.Token{token.SQUARED, "squared"},
+					Left:  &ast.IntegerLiteral{token.Token{token.INTEGER, "7"}, 7},
+				},
+				Second: &ast.IntegerLiteral{token.Token{token.INTEGER, "12"}, 12},
+			},
+		},
+		{
+			"three (3) squared less two (2) cubed",
+			&ast.InfixExpr{
+				Token: token.Token{token.LESS, "less"},
+				Left: &ast.PostfixExpr{
+					Token: token.Token{token.SQUARED, "squared"},
+					Left:  &ast.IntegerLiteral{token.Token{token.INTEGER, "3"}, 3},
+				},
+				Right: &ast.PostfixExpr{
+					Token: token.Token{token.CUBED, "cubed"},
+					Left:  &ast.IntegerLiteral{token.Token{token.INTEGER, "2"}, 2},
+				},
+			},
+		},
 	} {
 		p := New(lexer.New(test.input))
 		expr := p.parseExpr(LOWEST)
 		err := p.lastError()
 		if !reflect.DeepEqual(expr, test.expr) || err != nil {
 			t.Errorf("parseExpr(%v): got %+v, %v; want %+v", test.input, expr, err, test.expr)
+		}
+	}
+}
+
+func TestPostfixExpr(t *testing.T) {
+	for _, test := range []struct {
+		input string
+		expr  ast.Expr
+	}{
+		{
+			"three (3) squared",
+			&ast.PostfixExpr{
+				Token: token.Token{token.SQUARED, "squared"},
+				Left:  &ast.IntegerLiteral{token.Token{token.INTEGER, "3"}, 3},
+			},
+		},
+		{
+			"four (4) cubed",
+			&ast.PostfixExpr{
+				Token: token.Token{token.CUBED, "cubed"},
+				Left:  &ast.IntegerLiteral{token.Token{token.INTEGER, "4"}, 4},
+			},
+		},
+		{
+			"ten (10) cubed squared",
+			&ast.PostfixExpr{
+				Token: token.Token{token.SQUARED, "squared"},
+				Left: &ast.PostfixExpr{
+					Token: token.Token{token.CUBED, "cubed"},
+					Left:  &ast.IntegerLiteral{token.Token{token.INTEGER, "10"}, 10},
+				},
+			},
+		},
+	} {
+		p := New(lexer.New(test.input))
+		expr := p.parseExpr(LOWEST)
+		err := p.lastError()
+		if !reflect.DeepEqual(expr, test.expr) || err != nil {
+			t.Errorf("ParsePostfixExpr(%v): got %#v, %v; want %#v", test.input, expr, err, test.expr)
 		}
 	}
 }

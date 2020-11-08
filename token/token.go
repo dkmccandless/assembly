@@ -32,6 +32,8 @@ const (
 	POWER
 
 	// Operators
+	SQUARED
+	CUBED
 	TWICE
 	THRICE
 	SUM
@@ -90,6 +92,8 @@ var keywords = map[string]Type{
 	"quadrillion": POWER,
 	"quintillion": POWER,
 
+	"squared":   SQUARED,
+	"cubed":     CUBED,
 	"twice":     TWICE,
 	"thrice":    THRICE,
 	"sum":       SUM,

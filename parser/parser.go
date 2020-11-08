@@ -50,6 +50,7 @@ const (
 	LOWEST precedence = iota
 	INFIX
 	PREFIX
+	POSTFIX
 )
 
 // Parser parses tokens from a Lexer into an abstract syntax tree.
@@ -98,6 +99,8 @@ func (p *Parser) precedence(t token.Token) precedence {
 		return PREFIX
 	}
 	switch t.Typ {
+	case token.SQUARED, token.CUBED:
+		return POSTFIX
 	case token.IDENT, token.STRING, token.NUMERAL, token.TWICE, token.THRICE:
 		return PREFIX
 	case token.LESS:
@@ -236,7 +239,7 @@ func (p *Parser) parseDeclStmt() *ast.DeclStmt {
 		p.idents[id] = declared
 	}
 	p.next()
-	for !p.cur.IsCardinal() && !p.curIs(token.NUMERAL) && !p.curIs(token.STRING) && !p.curIs(token.IDENT) {
+	for !isExprToken(p.cur) {
 		p.next()
 	}
 	if p.curIs(token.IDENT) {
@@ -265,7 +268,7 @@ func (p *Parser) parseResolvedStmt() ast.ResolvedStmt {
 func (p *Parser) parsePublishStmt() *ast.PublishStmt {
 	s := &ast.PublishStmt{Token: p.cur}
 	p.next()
-	for !p.cur.IsCardinal() && !p.curIs(token.STRING) && !p.curIs(token.IDENT) {
+	for !isExprToken(p.cur) {
 		p.next()
 	}
 	if p.curIs(token.IDENT) {
@@ -283,11 +286,16 @@ func (p *Parser) parseExpr(prec precedence) ast.Expr {
 	}
 	// Left-associative
 	for prec < p.peekPrec() {
-		if !p.peekIs(token.LESS) {
+		switch p.peek.Typ {
+		case token.LESS:
+			p.next()
+			left = p.parseInfixExpr(left)
+		case token.SQUARED, token.CUBED:
+			p.next()
+			left = p.parsePostfixExpr(left)
+		default:
 			return left
 		}
-		p.next()
-		left = p.parseInfixExpr(left)
 	}
 	return left
 }
@@ -332,6 +340,16 @@ func (p *Parser) parseBinaryPrefixExpr() ast.Expr {
 	return expr
 }
 
+// parsePostfixExpr parses a postfix expression: an expression in left denotation context
+// that does not accept a following expression.
+func (p *Parser) parsePostfixExpr(left ast.Expr) ast.Expr {
+	expr := &ast.PostfixExpr{
+		Token: p.cur,
+		Left:  left,
+	}
+	return expr
+}
+
 // parseInfixExpr parses an infix expression: an expression in left denotation context
 // that expects a following expression.
 func (p *Parser) parseInfixExpr(left ast.Expr) ast.Expr {
@@ -351,4 +369,20 @@ func (p *Parser) parseIdentifier() *ast.Identifier {
 
 func (p *Parser) parseStringLiteral() *ast.StringLiteral {
 	return &ast.StringLiteral{Token: p.cur, Value: p.cur.Lit}
+}
+
+// isExprToken reports whether t can begin an ast.Expr.
+func isExprToken(t token.Token) bool {
+	switch t.Typ {
+	case token.STRING, token.IDENT,
+		token.TWICE, token.THRICE,
+		token.SUM, token.PRODUCT, token.QUOTIENT, token.REMAINDER:
+		return true
+	case token.NUMERAL:
+		// Let parseIntegerLiteral record the syntax error
+		return true
+	default:
+		return t.IsCardinal()
+	}
+
 }

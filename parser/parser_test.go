@@ -575,6 +575,13 @@ func TestParseExpr(t *testing.T) {
 		},
 	} {
 		p := New(lexer.New(test.input))
+		p.idents["Greeting"] = declared
+		p.idents["Quantity"] = declared
+		p.idents["Answer"] = declared
+		p.idents["Ax"] = declared
+		p.idents["Ay"] = declared
+		p.idents["Bx"] = declared
+		p.idents["By"] = declared
 		expr := p.parseExpr(LOWEST)
 		err := p.lastError()
 		if !reflect.DeepEqual(expr, test.expr) || err != nil {

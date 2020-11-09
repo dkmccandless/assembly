@@ -211,19 +211,16 @@ func (p *Parser) ParseResolution() (*ast.Resolution, error) {
 }
 
 func (p *Parser) parseWhereasStmt() ast.WhereasStmt {
-	for !p.peekIs(token.HEREINAFTER) {
-		if p.peekIs(token.WHEREAS) || p.peekIs(token.RESOLVED) || p.peekIs(token.EOF) {
-			return nil
+	for ; !p.peekIs(token.WHEREAS) && !p.peekIs(token.RESOLVED) && !p.peekIs(token.EOF); p.next() {
+		if !p.curIs(token.HEREINAFTER) {
+			continue
 		}
-		p.next()
+		switch p.cur.Typ {
+		case token.HEREINAFTER:
+			return p.parseDeclStmt()
+		}
 	}
-	p.next()
-	switch p.cur.Typ {
-	case token.HEREINAFTER:
-		return p.parseDeclStmt()
-	default:
-		return nil
-	}
+	return nil
 }
 
 func (p *Parser) parseDeclStmt() *ast.DeclStmt {
@@ -404,5 +401,4 @@ func isExprToken(t token.Token) bool {
 	default:
 		return t.IsCardinal()
 	}
-
 }

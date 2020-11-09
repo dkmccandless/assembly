@@ -50,6 +50,16 @@ type AssumeStmt struct {
 func (s *AssumeStmt) resStmtNode()   {}
 func (s *AssumeStmt) String() string { return s.Token.Lit }
 
+type IfStmt struct {
+	Token       token.Token // token.IF
+	Left, Right Expr
+	Relation    token.Token // e.g. token.EXCEEDS
+	Consequence ResolvedStmt
+}
+
+func (s *IfStmt) resStmtNode()   {}
+func (s *IfStmt) String() string { return s.Token.Lit }
+
 type PublishStmt struct {
 	Token token.Token // token.PUBLISH
 	Value Expr

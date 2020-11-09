@@ -384,6 +384,52 @@ func TestParseAssumeStmt(t *testing.T) {
 	}
 }
 
+func TestParseIfStmt(t *testing.T) {
+	for _, test := range []struct {
+		input string
+		want  *ast.IfStmt
+	}{
+		{
+			`if Error equals negative three (-3) publish "Error: TODO"`,
+			&ast.IfStmt{
+				Token:    token.Token{token.IF, "if"},
+				Left:     &ast.Identifier{token.Token{token.IDENT, "Error"}, "Error"},
+				Right:    &ast.IntegerLiteral{token.Token{token.INTEGER, "-3"}, -3},
+				Relation: token.Token{token.EQUALS, "equals"},
+				Consequence: &ast.PublishStmt{
+					Token: token.Token{token.PUBLISH, "publish"},
+					Value: &ast.StringLiteral{Token: token.Token{token.STRING, "Error: TODO"}, Value: "Error: TODO"},
+				},
+			},
+		},
+		{
+			`if Quorum exceeds Attendance Message assume "This Assembly lacks a quorum."`,
+			&ast.IfStmt{
+				Token:    token.Token{token.IF, "if"},
+				Left:     &ast.Identifier{token.Token{token.IDENT, "Quorum"}, "Quorum"},
+				Right:    &ast.Identifier{token.Token{token.IDENT, "Attendance"}, "Attendance"},
+				Relation: token.Token{token.EXCEEDS, "exceeds"},
+				Consequence: &ast.AssumeStmt{
+					Token: token.Token{token.ASSUME, "assume"},
+					Name:  &ast.Identifier{token.Token{token.IDENT, "Message"}, "Message"},
+					Value: &ast.StringLiteral{token.Token{token.STRING, "This Assembly lacks a quorum."}, "This Assembly lacks a quorum."},
+				},
+			},
+		},
+	} {
+		p := New(lexer.New(test.input))
+		p.idents["Error"] = declared
+		p.idents["Quorum"] = declared
+		p.idents["Attendance"] = declared
+		p.idents["Message"] = declared
+		got := p.parseIfStmt()
+		err := p.lastError()
+		if err != nil || !reflect.DeepEqual(got, test.want) {
+			t.Errorf("parseIfStmt(%v): got %#v, %v, want %#v", test.input, got, err, test.want)
+		}
+	}
+}
+
 func TestParsePublishStmt(t *testing.T) {
 	for _, test := range []struct {
 		input string

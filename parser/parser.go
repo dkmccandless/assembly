@@ -248,7 +248,7 @@ func (p *Parser) parseDeclStmt() *ast.DeclStmt {
 
 func (p *Parser) parseResolvedStmt() ast.ResolvedStmt {
 	for ; !p.peekIs(token.WHEREAS) && !p.peekIs(token.RESOLVED) && !p.peekIs(token.EOF); p.next() {
-		if !p.curIs(token.IDENT) && !p.curIs(token.PUBLISH) {
+		if !p.curIs(token.IDENT) && !p.curIs(token.IF) && !p.curIs(token.PUBLISH) {
 			continue
 		}
 		switch p.cur.Typ {
@@ -264,6 +264,8 @@ func (p *Parser) parseResolvedStmt() ast.ResolvedStmt {
 			}
 			p.next()
 			return p.parseAssumeStmt(id)
+		case token.IF:
+			return p.parseIfStmt()
 		case token.PUBLISH:
 			return p.parsePublishStmt()
 		}
@@ -281,6 +283,28 @@ func (p *Parser) parseAssumeStmt(ident *ast.Identifier) *ast.AssumeStmt {
 		p.next()
 	}
 	s.Value = p.parseExpr(LOWEST)
+	return s
+}
+
+func (p *Parser) parseIfStmt() *ast.IfStmt {
+	s := &ast.IfStmt{Token: p.cur}
+	p.next()
+	for !isExprToken(p.cur) {
+		p.next()
+	}
+	s.Left = p.parseExpr(LOWEST)
+	p.next()
+	for !p.curIs(token.EQUALS) && !p.curIs(token.EXCEEDS) {
+		p.next()
+	}
+	s.Relation = p.cur
+	p.next()
+	for !isExprToken(p.cur) {
+		p.next()
+	}
+	s.Right = p.parseExpr(LOWEST)
+	p.next()
+	s.Consequence = p.parseResolvedStmt()
 	return s
 }
 

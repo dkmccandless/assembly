@@ -231,6 +231,71 @@ func TestAssumeStmt(t *testing.T) {
 	}
 }
 
+func TestIfStmt(t *testing.T) {
+	for _, test := range []struct {
+		stmt *ast.IfStmt
+		id   string
+		obj  object.Object
+	}{
+		{
+			&ast.IfStmt{
+				Token:    token.Token{token.IF, "if"},
+				Left:     &ast.Identifier{token.Token{token.IDENT, "Error"}, "Error"},
+				Right:    &ast.IntegerLiteral{token.Token{token.INTEGER, "1"}, 1},
+				Relation: token.Token{token.EQUALS, "equals"},
+				Consequence: &ast.AssumeStmt{
+					Token: token.Token{token.ASSUME, "assume"},
+					Name:  &ast.Identifier{token.Token{token.IDENT, "Error"}, "Error"},
+					Value: &ast.BinaryPrefixExpr{
+						Token:  token.Token{token.SUM, "sum"},
+						First:  &ast.Identifier{token.Token{token.IDENT, "Error"}, "Error"},
+						Second: &ast.IntegerLiteral{token.Token{token.INTEGER, "1"}, 1},
+					},
+				},
+			},
+			"Error",
+			&object.Integer{1},
+		},
+		{
+			&ast.IfStmt{
+				Token:    token.Token{token.IF, "if"},
+				Left:     &ast.Identifier{token.Token{token.IDENT, "Quorum"}, "Quorum"},
+				Right:    &ast.Identifier{token.Token{token.IDENT, "Attendance"}, "Attendance"},
+				Relation: token.Token{token.EXCEEDS, "exceeds"},
+				Consequence: &ast.AssumeStmt{
+					Token: token.Token{token.ASSUME, "assume"},
+					Name:  &ast.Identifier{token.Token{token.IDENT, "Message"}, "Message"},
+					Value: &ast.StringLiteral{token.Token{token.STRING, "This Assembly lacks a quorum."}, "This Assembly lacks a quorum."},
+				},
+			},
+			"Message",
+			&object.String{"This Assembly lacks a quorum."},
+		},
+	} {
+		env := object.NewEnvironment()
+		env.Set("Error", &object.Integer{0})
+		env.Set("Quorum", &object.Integer{10})
+		env.Set("Attendance", &object.Integer{12})
+		env.Set("Message", &object.String{"No messages."})
+		if err := Eval(test.stmt, env); err != nil {
+			t.Errorf("EvalIfStmt(%+v): got error %v", test.stmt, err)
+		}
+		obj, _ := env.Get(test.id)
+		if reflect.DeepEqual(obj, test.obj) {
+			t.Errorf("EvalIfStmt(%+v): consequence evaluated on false condition", test.stmt)
+		}
+		env.Set("Error", &object.Integer{1})
+		env.Set("Attendance", &object.Integer{8})
+		if err := Eval(test.stmt, env); err != nil {
+			t.Errorf("EvalIfStmt(%+v): got error %v", test.stmt, err)
+		}
+		obj, _ = env.Get(test.id)
+		if !reflect.DeepEqual(obj, test.obj) {
+			t.Errorf("EvaIfStmt(%+v, %v): consequence not evaluated on true condition", test.stmt, test.id)
+		}
+	}
+}
+
 func TestEvalUnaryPrefixExpr(t *testing.T) {
 	for _, test := range []struct {
 		ast ast.Expr

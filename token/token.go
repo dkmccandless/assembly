@@ -31,7 +31,7 @@ const (
 	HUNDRED
 	POWER
 
-	// Operators
+	// Numeric operators
 	SQUARED
 	CUBED
 	TWICE
@@ -41,6 +41,10 @@ const (
 	QUOTIENT
 	REMAINDER
 	LESS
+
+	// Relational operators
+	EQUALS
+	EXCEEDS
 
 	// Punctuation
 	LPAREN
@@ -52,6 +56,7 @@ const (
 	RESOLVED
 	HEREINAFTER
 	ASSUME
+	IF
 	PUBLISH
 )
 
@@ -103,10 +108,14 @@ var keywords = map[string]Type{
 	"remainder": REMAINDER,
 	"less":      LESS,
 
+	"equals":  EQUALS,
+	"exceeds": EXCEEDS,
+
 	"whereas":     WHEREAS,
 	"resolved":    RESOLVED,
 	"hereinafter": HEREINAFTER,
 	"assume":      ASSUME,
+	"if":          IF,
 	"publish":     PUBLISH,
 }
 

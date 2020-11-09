@@ -60,6 +60,34 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		if val := Eval(node.Value, env); val != nil {
 			env.Set(node.Name.Value, val)
 		}
+	case *ast.IfStmt:
+		left := Eval(node.Left, env)
+		if isError(left) {
+			return left
+		}
+		right := Eval(node.Right, env)
+		if isError(right) {
+			return right
+		}
+		if left.Type() != right.Type() {
+			return typeMismatchError(left, right)
+		}
+		var condition bool
+		switch node.Relation.Typ {
+		case token.EQUALS:
+			condition = left == right
+		case token.EXCEEDS:
+			if left.Type() != object.INTEGER {
+				return nonNumericError(left)
+			}
+			condition = left.(*object.Integer).Value > right.(*object.Integer).Value
+		}
+		if condition {
+			err := Eval(node.Consequence, env)
+			if err != nil {
+				return err
+			}
+		}
 	case *ast.PublishStmt:
 		if val := Eval(node.Value, env); val != nil {
 			fmt.Println(val.Inspect())
@@ -147,6 +175,11 @@ func evalPostfixExpr(t token.Token, left object.Object) object.Object {
 	default:
 		return &object.Error{fmt.Sprintf("unknown operator %v %v", l, t.Lit)}
 	}
+}
+
+// typeMismatchError records that a and b are different types.
+func typeMismatchError(a, b object.Object) *object.Error {
+	return &object.Error{fmt.Sprintf("mismatched types %v and %v", a.Type(), b.Type())}
 }
 
 // nonNumericError records that obj occurs in an expression context that requires a numeric form.
